@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Run Spring Boot (MySQL Profile)",
+      "type": "shell",
+      "command": "mvn",
+      "args": ["spring-boot:run", "-Dspring-boot.run.profiles=mysql"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "2. Run Spring Boot (H2 Zero-Config Profile)",
+      "type": "shell",
+      "command": "mvn",
+      "args": ["spring-boot:run", "-Dspring-boot.run.profiles=h2"],
+      "problemMatcher": []
+    },
+    {
+      "label": "3. Run Instant Preview Server (Node.js)",
+      "type": "shell",
+      "command": "node",
+      "args": ["preview-server.js"],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot - ServerMonitorApplication (MySQL)",
+      "request": "launch",
+      "mainClass": "com.servermonitor.ServerMonitorApplication",
+      "projectName": "distributed-server-monitor",
+      "args": "--spring.profiles.active=mysql"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot - ServerMonitorApplication (H2 In-Memory)",
+      "request": "launch",
+      "mainClass": "com.servermonitor.ServerMonitorApplication",
+      "projectName": "distributed-server-monitor",
+      "args": "--spring.profiles.active=h2"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Instant Preview Server (Node.js)",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/preview-server.js"
+    }
+  ]
+}

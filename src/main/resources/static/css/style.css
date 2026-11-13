@@ -1,0 +1,530 @@
+/* ========================================================================
+   Distributed Server Health Monitoring and Failure Detection System
+   Modern Dashboard Stylesheet (Bootstrap 5 Enhanced)
+   ======================================================================== */
+
+:root {
+  --primary: #4e73df;
+  --primary-hover: #375a7f;
+  --dark-bg: #1a1e29;
+  --sidebar-bg: #1e2230;
+  --sidebar-hover: #2a2f42;
+  --sidebar-active: #4e73df;
+  --content-bg: #f4f6f9;
+  --card-bg: #ffffff;
+  --text-primary: #2d3748;
+  --text-muted: #718096;
+  --border-color: #e2e8f0;
+
+  /* Finite State Machine Color Standards */
+  --state-active: #198754;      /* Green */
+  --state-active-bg: #e8f5e9;
+  --state-slow: #f59e0b;        /* Yellow / Amber */
+  --state-slow-bg: #fef3c7;
+  --state-disconnected: #dc3545;/* Red */
+  --state-disconnected-bg: #fde8e8;
+  --state-recovering: #0d6efd;  /* Blue */
+  --state-recovering-bg: #e1effe;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--content-bg);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* ----------------------------------------------------
+   Layout & Sidebar
+   ---------------------------------------------------- */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+#sidebar {
+  width: 260px;
+  background: var(--sidebar-bg);
+  color: #c2c7d0;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+#sidebar .brand {
+  padding: 20px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#sidebar .brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4e73df, #224abe);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 10px rgba(78, 115, 223, 0.4);
+}
+
+#sidebar .brand-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+#sidebar .nav-list {
+  list-style: none;
+  padding: 15px 10px;
+  margin: 0;
+  flex-grow: 1;
+}
+
+#sidebar .nav-item {
+  margin-bottom: 4px;
+}
+
+#sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  color: #a0aec0;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+#sidebar .nav-link:hover {
+  background: var(--sidebar-hover);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+#sidebar .nav-link.active {
+  background: var(--sidebar-active);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(78, 115, 223, 0.35);
+}
+
+#sidebar .nav-link i {
+  width: 20px;
+  text-align: center;
+  font-size: 1.05rem;
+}
+
+#sidebar .nav-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+/* Sidebar FSM Widget */
+.sidebar-fsm-card {
+  margin: 15px 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-fsm-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #718096;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.fsm-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  margin-bottom: 5px;
+}
+
+.fsm-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-active { background-color: var(--state-active); box-shadow: 0 0 6px var(--state-active); }
+.dot-slow { background-color: var(--state-slow); box-shadow: 0 0 6px var(--state-slow); }
+.dot-disconnected { background-color: var(--state-disconnected); box-shadow: 0 0 6px var(--state-disconnected); }
+.dot-recovering { background-color: var(--state-recovering); box-shadow: 0 0 6px var(--state-recovering); }
+
+/* Main Content Area */
+#main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* Top Navbar */
+.top-navbar {
+  height: 70px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.top-navbar .page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+}
+
+.top-navbar .nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Content Body */
+.content-wrapper {
+  padding: 25px;
+  flex-grow: 1;
+}
+
+/* ----------------------------------------------------
+   Overview Statistic Metric Cards
+   ---------------------------------------------------- */
+.stat-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.stat-card.card-total::before { background-color: #4e73df; }
+.stat-card.card-active::before { background-color: var(--state-active); }
+.stat-card.card-slow::before { background-color: var(--state-slow); }
+.stat-card.card-disconnected::before { background-color: var(--state-disconnected); }
+.stat-card.card-recovering::before { background-color: var(--state-recovering); }
+
+.stat-card .card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+}
+
+.icon-total { background-color: #ebf4ff; color: #4e73df; }
+.icon-active { background-color: var(--state-active-bg); color: var(--state-active); }
+.icon-slow { background-color: var(--state-slow-bg); color: var(--state-slow); }
+.icon-disconnected { background-color: var(--state-disconnected-bg); color: var(--state-disconnected); }
+.icon-recovering { background-color: var(--state-recovering-bg); color: var(--state-recovering); }
+
+.stat-card .stat-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.stat-card .stat-value {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #1a202c;
+  line-height: 1.2;
+}
+
+.stat-card .stat-subtext {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-top: 6px;
+}
+
+/* ----------------------------------------------------
+   Finite State Machine Badges
+   ---------------------------------------------------- */
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.badge-active {
+  background-color: var(--state-active-bg);
+  color: var(--state-active);
+  border: 1px solid rgba(25, 135, 84, 0.3);
+}
+
+.badge-slow {
+  background-color: var(--state-slow-bg);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-disconnected {
+  background-color: var(--state-disconnected-bg);
+  color: var(--state-disconnected);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.badge-recovering {
+  background-color: var(--state-recovering-bg);
+  color: var(--state-recovering);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+}
+
+/* Ping Pulse Indicator */
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(25, 135, 84, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+}
+
+/* ----------------------------------------------------
+   Tables & Data Cards
+   ---------------------------------------------------- */
+.card-custom {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  margin-bottom: 25px;
+}
+
+.card-custom .card-header {
+  background: transparent;
+  border-bottom: 1px solid var(--border-color);
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-custom .card-header .card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.table-custom {
+  margin-bottom: 0;
+}
+
+.table-custom thead th {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px 18px;
+  white-space: nowrap;
+}
+
+.table-custom tbody td {
+  padding: 14px 18px;
+  vertical-align: middle;
+  border-bottom: 1px solid #edf2f7;
+  font-size: 0.9rem;
+}
+
+.table-custom tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Response time display */
+.latency-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.latency-bar-bg {
+  width: 60px;
+  height: 6px;
+  background-color: #edf2f7;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.latency-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+/* ----------------------------------------------------
+   Alerts Feed
+   ---------------------------------------------------- */
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #edf2f7;
+  transition: background-color 0.2s ease;
+}
+
+.alert-item:hover {
+  background-color: #fbfcfe;
+}
+
+.alert-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.alert-item.alert-type-FAILURE .alert-icon-box {
+  background-color: var(--state-disconnected-bg);
+  color: var(--state-disconnected);
+}
+
+.alert-item.alert-type-RECOVERY .alert-icon-box,
+.alert-item.alert-type-STABILIZED .alert-icon-box {
+  background-color: var(--state-recovering-bg);
+  color: var(--state-recovering);
+}
+
+.alert-item.alert-type-DEGRADED .alert-icon-box {
+  background-color: var(--state-slow-bg);
+  color: var(--state-slow);
+}
+
+.alert-item.alert-type-RESTORED .alert-icon-box {
+  background-color: var(--state-active-bg);
+  color: var(--state-active);
+}
+
+/* ----------------------------------------------------
+   FSM State Transition Flow Visualizer
+   ---------------------------------------------------- */
+.fsm-flow-box {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.fsm-node {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-align: center;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.node-active { background: #198754; }
+.node-slow { background: #f59e0b; }
+.node-disconnected { background: #dc3545; }
+.node-recovering { background: #0d6efd; }
+
+/* ----------------------------------------------------
+   Authentication Card
+   ---------------------------------------------------- */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 20px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px 35px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  #sidebar {
+    position: fixed;
+    height: 100vh;
+    left: -260px;
+  }
+  #sidebar.show {
+    left: 0;
+  }
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+}

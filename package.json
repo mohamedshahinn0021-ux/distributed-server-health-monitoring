@@ -1,0 +1,12 @@
+{
+  "name": "distributed-server-monitor-preview",
+  "version": "1.0.0",
+  "description": "Instant preview and demonstration server for Distributed Server Health Monitoring and Failure Detection System",
+  "main": "preview-server.js",
+  "scripts": {
+    "start": "node preview-server.js"
+  },
+  "keywords": ["server-monitor", "fsm", "health-check", "fullstack"],
+  "author": "Distributed Systems Team",
+  "license": "MIT"
+}

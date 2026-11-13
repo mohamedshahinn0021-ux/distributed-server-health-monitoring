@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Distributed Server Health Monitoring and Failure Detection System</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome 6 -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <!-- Custom Application Stylesheet -->
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fas fa-server"></i>
+        </div>
+        <div>
+          <div class="brand-title">ServerMonitor</div>
+          <small class="text-muted" style="font-size: 0.72rem;">FSM Health Engine</small>
+        </div>
+      </div>
+
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a href="#" class="nav-link sidebar-nav-link active" data-section="section-dashboard" data-title="Dashboard Overview">
+            <i class="fas fa-th-large"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link sidebar-nav-link" data-section="section-servers" data-title="Server Management">
+            <i class="fas fa-network-wired"></i>
+            <span>Server Management</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link sidebar-nav-link" data-section="section-history" data-title="Monitoring History">
+            <i class="fas fa-history"></i>
+            <span>Monitoring History</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link sidebar-nav-link" data-section="section-alerts" data-title="Failure & Recovery Alerts">
+            <i class="fas fa-bell"></i>
+            <span>Failure Alerts</span>
+            <span id="sidebar-alert-badge" class="badge bg-danger nav-badge" style="display: none;">0</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- FSM States Legend Widget -->
+      <div class="sidebar-fsm-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="sidebar-fsm-title mb-0">FSM State States</span>
+          <a href="#" class="text-muted small text-decoration-none" data-bs-toggle="modal" data-bs-target="#fsmInfoModal" title="View FSM State Machine Documentation">
+            <i class="fas fa-info-circle"></i>
+          </a>
+        </div>
+        <div class="fsm-legend-item">
+          <span class="fsm-dot dot-active"></span>
+          <span>ACTIVE (Healthy)</span>
+        </div>
+        <div class="fsm-legend-item">
+          <span class="fsm-dot dot-slow"></span>
+          <span>SLOW (Degraded)</span>
+        </div>
+        <div class="fsm-legend-item">
+          <span class="fsm-dot dot-disconnected"></span>
+          <span>DISCONNECTED (Down)</span>
+        </div>
+        <div class="fsm-legend-item">
+          <span class="fsm-dot dot-recovering"></span>
+          <span>RECOVERING (Verifying)</span>
+        </div>
+      </div>
+
+      <!-- Admin Profile & Logout Footer -->
+      <div class="p-3 border-top border-secondary border-opacity-25 mt-auto">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 34px; height: 34px; flex-shrink: 0;">
+              <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="overflow-hidden">
+              <div id="current-user-name" class="fw-bold text-light text-truncate" style="font-size: 0.85rem;">Admin</div>
+              <small class="text-muted d-block" style="font-size: 0.72rem;">Administrator</small>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-danger logout-trigger" title="Sign Out">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="main-content">
+      <!-- Top Navbar -->
+      <header class="top-navbar">
+        <div class="d-flex align-items-center gap-3">
+          <button id="sidebar-toggle" class="btn btn-light d-lg-none border">
+            <i class="fas fa-bars"></i>
+          </button>
+          <h1 id="navbar-page-title" class="page-title">Dashboard Overview</h1>
+          <span class="badge bg-success-subtle text-success border border-success-subtle d-none d-md-inline-flex align-items-center gap-1 px-2 py-1">
+            <span class="pulse-indicator"></span> Daemon: ACTIVE (15s)
+          </span>
+        </div>
+
+        <div class="nav-actions">
+          <!-- Live System Clock -->
+          <div class="d-none d-sm-flex align-items-center text-muted small gap-1 bg-light px-3 py-1 rounded-pill border">
+            <i class="far fa-clock"></i>
+            <span id="live-system-clock">--:--:--</span>
+          </div>
+
+          <!-- Auto-Refresh Toggle -->
+          <button id="auto-refresh-toggle" class="btn btn-sm btn-outline-success">
+            <i class="fas fa-sync-alt fa-spin me-1"></i>
+            <span class="toggle-text d-none d-md-inline">Auto-Refresh: ON (10s)</span>
+          </button>
+
+          <!-- Trigger Health Scan All Button -->
+          <button id="scan-all-btn" class="btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-bolt me-1"></i>
+            <span>Scan All Now</span>
+          </button>
+
+          <!-- Notification Bell -->
+          <button class="btn btn-light border position-relative" title="Recent Alerts" onclick="document.querySelector('[data-section=\'section-alerts\']').click()">
+            <i class="far fa-bell"></i>
+            <span id="nav-alert-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Container -->
+      <div class="content-wrapper">
+
+        <!-- ============================================================== -->
+        <!-- SECTION 1: DASHBOARD OVERVIEW                                  -->
+        <!-- ============================================================== -->
+        <section id="section-dashboard" class="dashboard-section">
+          <!-- Metric Overview Cards -->
+          <div class="row g-3 mb-4">
+            <!-- Total Servers -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+              <div class="stat-card card-total">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="stat-label">Total Servers</div>
+                    <div id="stat-total-servers" class="stat-value">0</div>
+                  </div>
+                  <div class="card-icon icon-total">
+                    <i class="fas fa-server"></i>
+                  </div>
+                </div>
+                <div class="stat-subtext">Registered endpoints</div>
+              </div>
+            </div>
+
+            <!-- Active Servers (Green) -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+              <div class="stat-card card-active">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="stat-label text-success">Active</div>
+                    <div id="stat-active-servers" class="stat-value text-success">0</div>
+                  </div>
+                  <div class="card-icon icon-active">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                </div>
+                <div class="stat-subtext">Optimal performance</div>
+              </div>
+            </div>
+
+            <!-- Slow Servers (Yellow) -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+              <div class="stat-card card-slow">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="stat-label text-warning">Slow</div>
+                    <div id="stat-slow-servers" class="stat-value text-warning">0</div>
+                  </div>
+                  <div class="card-icon icon-slow">
+                    <i class="fas fa-tachometer-alt"></i>
+                  </div>
+                </div>
+                <div class="stat-subtext">High latency degraded</div>
+              </div>
+            </div>
+
+            <!-- Disconnected Servers (Red) -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+              <div class="stat-card card-disconnected">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="stat-label text-danger">Disconnected</div>
+                    <div id="stat-disconnected-servers" class="stat-value text-danger">0</div>
+                  </div>
+                  <div class="card-icon icon-disconnected">
+                    <i class="fas fa-times-circle"></i>
+                  </div>
+                </div>
+                <div class="stat-subtext">Unreachable / Timeout</div>
+              </div>
+            </div>
+
+            <!-- Recovering Servers (Blue) -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+              <div class="stat-card card-recovering">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="stat-label text-primary">Recovering</div>
+                    <div id="stat-recovering-servers" class="stat-value text-primary">0</div>
+                  </div>
+                  <div class="card-icon icon-recovering">
+                    <i class="fas fa-heartbeat"></i>
+                  </div>
+                </div>
+                <div class="stat-subtext">Stability verification</div>
+              </div>
+            </div>
+
+            <!-- Cluster Health % -->
+            <div class="col-xl-2 col-md-4 col-sm-6">
+              <div class="stat-card" style="border-left: 4px solid #6f42c1;">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="stat-label" style="color: #6f42c1;">Health Index</div>
+                    <div id="stat-health-percentage" class="stat-value" style="color: #6f42c1;">0%</div>
+                  </div>
+                  <div class="card-icon" style="background: #f3e8ff; color: #6f42c1;">
+                    <i class="fas fa-shield-alt"></i>
+                  </div>
+                </div>
+                <div class="stat-subtext">Avg: <span id="stat-avg-latency" class="fw-bold">0 ms</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts and Quick Feeds Row -->
+          <div class="row g-4 mb-4">
+            <!-- Response Time History Line Chart -->
+            <div class="col-lg-8">
+              <div class="card-custom h-100">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <i class="fas fa-chart-line text-primary"></i>
+                    Response Time Trends (ms)
+                  </h3>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="loadChart()" title="Reload Chart">
+                    <i class="fas fa-redo-alt"></i>
+                  </button>
+                </div>
+                <div class="p-3">
+                  <div style="height: 310px; position: relative;">
+                    <canvas id="responseTimeChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Failure Alerts Widget -->
+            <div class="col-lg-4">
+              <div class="card-custom h-100">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                    Recent Alerts & Events
+                  </h3>
+                  <button class="btn btn-sm btn-link text-decoration-none p-0" onclick="document.querySelector('[data-section=\'section-alerts\']').click()">
+                    View All &rarr;
+                  </button>
+                </div>
+                <div id="recent-alerts-container" class="p-0 overflow-auto" style="max-height: 330px;">
+                  <!-- Dynamic alert feed -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FSM State Architecture Banner & Simulation Controls -->
+          <div class="card-custom mb-4 bg-light border-0 shadow-sm">
+            <div class="p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                  <i class="fas fa-project-diagram fa-lg"></i>
+                </div>
+                <div>
+                  <h6 class="mb-1 fw-bold text-dark">Finite State Machine (FSM) Engine Active</h6>
+                  <p class="mb-0 text-muted small">
+                    Classifies conditions into <strong>ACTIVE</strong>, <strong>SLOW</strong>, <strong>DISCONNECTED</strong>, and <strong>RECOVERING</strong> with 3-cycle stability verification.
+                  </p>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <button id="toggle-mock-btn" class="btn btn-sm btn-outline-danger">
+                  <i class="fas fa-random me-1"></i>Toggle Mock Outage / Recovery
+                </button>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#fsmInfoModal">
+                  <i class="fas fa-sitemap me-1"></i>View FSM Model
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Server Table on Dashboard -->
+          <div class="card-custom">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-list text-primary"></i>
+                Live Server Status Overview
+              </h3>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addServerModal">
+                  <i class="fas fa-plus me-1"></i>Add Server
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-custom table-hover">
+                <thead>
+                  <tr>
+                    <th>Server Name</th>
+                    <th>Network Endpoint</th>
+                    <th>Current State</th>
+                    <th>Response Time</th>
+                    <th>Last Checked</th>
+                    <th>Stability Checks</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="servers-table-body">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- SECTION 2: SERVER MANAGEMENT                                   -->
+        <!-- ============================================================== -->
+        <section id="section-servers" class="dashboard-section d-none">
+          <div class="card-custom">
+            <div class="card-header flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <h3 class="card-title mb-0">
+                  <i class="fas fa-network-wired text-primary"></i>
+                  Server Management Directory
+                </h3>
+                <span id="table-count-badge" class="badge bg-secondary-subtle text-secondary">0 servers</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Search Input -->
+                <div class="input-group input-group-sm" style="width: 220px;">
+                  <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                  <input type="text" id="server-search" class="form-control border-start-0" placeholder="Search servers or IP...">
+                </div>
+
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addServerModal">
+                  <i class="fas fa-plus me-1"></i>Add Server
+                </button>
+              </div>
+            </div>
+
+            <!-- State Filter Tabs -->
+            <div class="px-3 pt-3 border-bottom bg-light">
+              <div class="btn-group btn-group-sm flex-wrap mb-2" role="group">
+                <button type="button" class="btn btn-outline-secondary active" data-server-filter="ALL">All Servers</button>
+                <button type="button" class="btn btn-outline-success" data-server-filter="ACTIVE">
+                  <span class="fsm-dot dot-active me-1"></span>Active
+                </button>
+                <button type="button" class="btn btn-outline-warning" data-server-filter="SLOW">
+                  <span class="fsm-dot dot-slow me-1"></span>Slow
+                </button>
+                <button type="button" class="btn btn-outline-danger" data-server-filter="DISCONNECTED">
+                  <span class="fsm-dot dot-disconnected me-1"></span>Disconnected
+                </button>
+                <button type="button" class="btn btn-outline-primary" data-server-filter="RECOVERING">
+                  <span class="fsm-dot dot-recovering me-1"></span>Recovering
+                </button>
+              </div>
+            </div>
+
+            <!-- Server Table (Rendered by servers.js) -->
+            <div class="table-responsive">
+              <table class="table table-custom table-hover">
+                <thead>
+                  <tr>
+                    <th>Server Name &amp; Description</th>
+                    <th>Target Host:Port</th>
+                    <th>FSM State</th>
+                    <th>Response Latency</th>
+                    <th>Last Checked</th>
+                    <th>Stability Status</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <!-- Reuses the servers-table-body -->
+                <tbody id="servers-table-body-mgmt">
+                  <!-- Synced automatically with servers table -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- SECTION 3: MONITORING HISTORY LOG                              -->
+        <!-- ============================================================== -->
+        <section id="section-history" class="dashboard-section d-none">
+          <div class="card-custom">
+            <div class="card-header flex-wrap gap-2">
+              <h3 class="card-title mb-0">
+                <i class="fas fa-history text-primary"></i>
+                Continuous Monitoring History Records
+              </h3>
+              <div class="d-flex align-items-center gap-2">
+                <label class="small text-muted mb-0">Filter by Server:</label>
+                <select id="history-server-filter" class="form-select form-select-sm" style="width: 220px;">
+                  <option value="ALL">All Monitored Servers</option>
+                </select>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadHistory()">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-custom table-hover">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Server Details</th>
+                    <th>Condition Status</th>
+                    <th>Response Time</th>
+                    <th>Probe Diagnostics / Error</th>
+                  </tr>
+                </thead>
+                <tbody id="history-table-body">
+                  <!-- Rendered by history.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- SECTION 4: FAILURE & RECOVERY ALERTS                           -->
+        <!-- ============================================================== -->
+        <section id="section-alerts" class="dashboard-section d-none">
+          <div class="card-custom">
+            <div class="card-header flex-wrap gap-2">
+              <h3 class="card-title mb-0">
+                <i class="fas fa-bell text-danger"></i>
+                Failure Detection & Recovery Incident Log
+              </h3>
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-success" onclick="handleAcknowledgeAll()">
+                  <i class="fas fa-check-double me-1"></i>Acknowledge All
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="handleClearAllAlerts()">
+                  <i class="fas fa-trash me-1"></i>Clear History
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-custom table-hover">
+                <thead>
+                  <tr>
+                    <th>Alert ID</th>
+                    <th>Type</th>
+                    <th>Target Server</th>
+                    <th>Transition</th>
+                    <th>Incident Description</th>
+                    <th>Time Reported</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="full-alerts-table-body">
+                  <!-- Rendered by alerts.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODALS                                                         -->
+  <!-- ============================================================== -->
+
+  <!-- Add Server Modal -->
+  <div class="modal fade" id="addServerModal" tabindex="-1" aria-labelledby="addServerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="addServerModalLabel"><i class="fas fa-plus-circle me-2"></i>Register New Server</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="add-server-form">
+          <div class="modal-body p-4">
+            <!-- Quick Fill Presets -->
+            <div class="mb-3">
+              <label class="form-label small text-muted fw-bold">Quick Presets for Testing:</label>
+              <div class="d-flex flex-wrap gap-1">
+                <button type="button" class="btn btn-xs btn-outline-primary" data-preset="google-dns">Google DNS</button>
+                <button type="button" class="btn btn-xs btn-outline-primary" data-preset="cloudflare-dns">Cloudflare DNS</button>
+                <button type="button" class="btn btn-xs btn-outline-success" data-preset="mock-healthy">Mock Fast</button>
+                <button type="button" class="btn btn-xs btn-outline-warning" data-preset="mock-slow">Mock Slow</button>
+                <button type="button" class="btn btn-xs btn-outline-danger" data-preset="mock-disconnected">Mock Down</button>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Server Name <span class="text-danger">*</span></label>
+              <input type="text" name="serverName" class="form-control" placeholder="e.g. Primary Web Gateway" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-8">
+                <label class="form-label small fw-bold">IP Address / Hostname <span class="text-danger">*</span></label>
+                <input type="text" name="ipAddress" class="form-control" placeholder="127.0.0.1 or domain" required>
+              </div>
+              <div class="col-4">
+                <label class="form-label small fw-bold">Port <span class="text-danger">*</span></label>
+                <input type="number" name="port" class="form-control" placeholder="8080" min="1" max="65535" required>
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-4">
+                <label class="form-label small fw-bold">Protocol</label>
+                <select name="protocol" class="form-select">
+                  <option value="HTTP">HTTP</option>
+                  <option value="TCP">TCP</option>
+                </select>
+              </div>
+              <div class="col-8">
+                <label class="form-label small fw-bold">Endpoint Path (for HTTP)</label>
+                <input type="text" name="endpointPath" class="form-control" placeholder="/" value="/">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Slow Threshold (ms)</label>
+              <input type="number" name="slowThresholdMs" class="form-control" value="500" min="50" max="10000">
+              <small class="text-muted">Latencies above this will classify the server into SLOW state.</small>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Description / Notes</label>
+              <textarea name="description" class="form-control" rows="2" placeholder="Optional notes about this node"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-save me-1"></i>Register &amp; Probe</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Server Modal -->
+  <div class="modal fade" id="editServerModal" tabindex="-1" aria-labelledby="editServerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="editServerModalLabel"><i class="fas fa-edit me-2"></i>Edit Server Configuration</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="edit-server-form">
+          <input type="hidden" name="editServerId">
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Server Name <span class="text-danger">*</span></label>
+              <input type="text" name="serverName" class="form-control" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-8">
+                <label class="form-label small fw-bold">IP Address / Hostname <span class="text-danger">*</span></label>
+                <input type="text" name="ipAddress" class="form-control" required>
+              </div>
+              <div class="col-4">
+                <label class="form-label small fw-bold">Port <span class="text-danger">*</span></label>
+                <input type="number" name="port" class="form-control" min="1" max="65535" required>
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-4">
+                <label class="form-label small fw-bold">Protocol</label>
+                <select name="protocol" class="form-select">
+                  <option value="HTTP">HTTP</option>
+                  <option value="TCP">TCP</option>
+                </select>
+              </div>
+              <div class="col-8">
+                <label class="form-label small fw-bold">Endpoint Path</label>
+                <input type="text" name="endpointPath" class="form-control">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Slow Threshold (ms)</label>
+              <input type="number" name="slowThresholdMs" class="form-control" min="50" max="10000">
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Description</label>
+              <textarea name="description" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-save me-1"></i>Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- FSM Architecture Info Modal -->
+  <div class="modal fade" id="fsmInfoModal" tabindex="-1" aria-labelledby="fsmInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="fsmInfoModalLabel">
+            <i class="fas fa-sitemap me-2"></i>Finite State Machine (FSM) Specification
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <h6 class="fw-bold mb-3">4-State Lifecycle Architecture:</h6>
+          <div class="row g-3 mb-4 text-center">
+            <div class="col-md-3 col-6">
+              <div class="fsm-node node-active">ACTIVE</div>
+              <small class="text-muted mt-1 d-block">Reachable &amp; Latency &le; Threshold</small>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="fsm-node node-slow">SLOW</div>
+              <small class="text-muted mt-1 d-block">Reachable &amp; Latency &gt; Threshold</small>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="fsm-node node-disconnected">DISCONNECTED</div>
+              <small class="text-muted mt-1 d-block">Connection Refused / Timeout</small>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="fsm-node node-recovering">RECOVERING</div>
+              <small class="text-muted mt-1 d-block">Reachable; passing 3 stability checks</small>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm small">
+              <thead class="table-light">
+                <tr>
+                  <th>From State</th>
+                  <th>Network Event / Probe Outcome</th>
+                  <th>To State</th>
+                  <th>System Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge bg-success">ACTIVE</span></td>
+                  <td>Unreachable (timeout/refused)</td>
+                  <td><span class="badge bg-danger">DISCONNECTED</span></td>
+                  <td>Generate FAILURE alert; reset stability counter to 0</td>
+                </tr>
+                <tr>
+                  <td><span class="badge bg-success">ACTIVE</span></td>
+                  <td>Reachable &amp; Response Time &gt; Threshold</td>
+                  <td><span class="badge bg-warning text-dark">SLOW</span></td>
+                  <td>Generate DEGRADED alert</td>
+                </tr>
+                <tr>
+                  <td><span class="badge bg-warning text-dark">SLOW</span></td>
+                  <td>Reachable &amp; Response Time &le; Threshold</td>
+                  <td><span class="badge bg-success">ACTIVE</span></td>
+                  <td>Generate RESTORED alert</td>
+                </tr>
+                <tr>
+                  <td><span class="badge bg-danger">DISCONNECTED</span></td>
+                  <td>Reachable again</td>
+                  <td><span class="badge bg-primary">RECOVERING</span></td>
+                  <td>Generate RECOVERY alert; initialize stability counter = 1</td>
+                </tr>
+                <tr>
+                  <td><span class="badge bg-primary">RECOVERING</span></td>
+                  <td>Unreachable before completing 3 checks</td>
+                  <td><span class="badge bg-danger">DISCONNECTED</span></td>
+                  <td>Generate FAILURE alert; reset counter to 0</td>
+                </tr>
+                <tr>
+                  <td><span class="badge bg-primary">RECOVERING</span></td>
+                  <td>3 consecutive successful checks achieved</td>
+                  <td><span class="badge bg-success">ACTIVE</span></td>
+                  <td>Generate STABILIZED alert; server marked fully restored</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Application Logic Modules -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/servers.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/alerts.js"></script>
+  <script src="js/dashboard.js"></script>
+
+  <script>
+    // Synchronize management view table with dashboard table rows
+    const observer = new MutationObserver(() => {
+      const src = document.getElementById('servers-table-body');
+      const dest = document.getElementById('servers-table-body-mgmt');
+      if (src && dest) {
+        dest.innerHTML = src.innerHTML;
+      }
+    });
+    const target = document.getElementById('servers-table-body');
+    if (target) {
+      observer.observe(target, { childList: true, subtree: true });
+    }
+  </script>
+</body>
+</html>
