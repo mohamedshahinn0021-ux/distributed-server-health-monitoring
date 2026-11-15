@@ -1,12 +1,23 @@
 {
-  "name": "distributed-server-monitor-preview",
+  "name": "distributed-server-monitor",
   "version": "1.0.0",
-  "description": "Instant preview and demonstration server for Distributed Server Health Monitoring and Failure Detection System",
-  "main": "preview-server.js",
+  "description": "Distributed Server Health Monitoring and Failure Detection System",
   "scripts": {
-    "start": "node preview-server.js"
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "install:all": "npm run install:server && npm run install:client",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev"
   },
-  "keywords": ["server-monitor", "fsm", "health-check", "fullstack"],
-  "author": "Distributed Systems Team",
+  "keywords": [
+    "distributed-systems",
+    "health-monitoring",
+    "finite-state-machine",
+    "react",
+    "nodejs",
+    "mongodb",
+    "socketio"
+  ],
+  "author": "Full Stack Assessment",
   "license": "MIT"
 }
