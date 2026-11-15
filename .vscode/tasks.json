@@ -2,28 +2,59 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "1. Run Spring Boot (MySQL Profile)",
+      "label": "1. Start Backend Server (Port 5000)",
       "type": "shell",
-      "command": "mvn",
-      "args": ["spring-boot:run", "-Dspring-boot.run.profiles=mysql"],
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "servers"
+      }
+    },
+    {
+      "label": "2. Start Frontend Client (Port 3000)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "servers"
+      }
+    },
+    {
+      "label": "3. Run FSM & Security Unit Tests",
+      "type": "shell",
+      "command": "node test-fsm.js",
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      },
       "group": {
-        "kind": "build",
+        "kind": "test",
         "isDefault": true
       },
       "problemMatcher": []
     },
     {
-      "label": "2. Run Spring Boot (H2 Zero-Config Profile)",
+      "label": "4. Install All Dependencies",
       "type": "shell",
-      "command": "mvn",
-      "args": ["spring-boot:run", "-Dspring-boot.run.profiles=h2"],
-      "problemMatcher": []
-    },
-    {
-      "label": "3. Run Instant Preview Server (Node.js)",
-      "type": "shell",
-      "command": "node",
-      "args": ["preview-server.js"],
+      "command": "npm run install:all",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
       "problemMatcher": []
     }
   ]

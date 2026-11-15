@@ -2,27 +2,24 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "java",
-      "name": "Spring Boot - ServerMonitorApplication (MySQL)",
+      "type": "node",
       "request": "launch",
-      "mainClass": "com.servermonitor.ServerMonitorApplication",
-      "projectName": "distributed-server-monitor",
-      "args": "--spring.profiles.active=mysql"
-    },
-    {
-      "type": "java",
-      "name": "Spring Boot - ServerMonitorApplication (H2 In-Memory)",
-      "request": "launch",
-      "mainClass": "com.servermonitor.ServerMonitorApplication",
-      "projectName": "distributed-server-monitor",
-      "args": "--spring.profiles.active=h2"
+      "name": "Start Backend Server (Express + Socket.IO)",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/server/index.js",
+      "cwd": "${workspaceFolder}/server",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "5000"
+      }
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "Instant Preview Server (Node.js)",
+      "name": "Run FSM & Security Unit Tests",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/preview-server.js"
+      "program": "${workspaceFolder}/server/test-fsm.js",
+      "cwd": "${workspaceFolder}/server"
     }
   ]
 }
