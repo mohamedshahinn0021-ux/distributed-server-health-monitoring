@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -63,7 +62,7 @@ public class HealthMonitoringService {
             return;
         }
 
-        log.info("Starting distributed health cycle for {} registered servers...", servers.size());
+        log.info("Starting distributed health cycle for {} registered servers in MongoDB...", servers.size());
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (Server s : servers) {
@@ -82,8 +81,7 @@ public class HealthMonitoringService {
     /**
      * Executes health check and FSM evaluation for an individual server by ID.
      */
-    @Transactional
-    public Server checkSingleServer(Long serverId) {
+    public Server checkSingleServer(String serverId) {
         Server server = serverRepository.findById(serverId).orElse(null);
         if (server == null) {
             return null;
@@ -110,6 +108,7 @@ public class HealthMonitoringService {
         // Record monitoring history entry
         MonitoringHistory history = new MonitoringHistory();
         history.setServer(updatedServer);
+        history.setServerId(updatedServer.getId());
         history.setResponseTimeMs(probe.getResponseTimeMs());
         history.setStatus(transition.getNewState());
         history.setCheckedAt(LocalDateTime.now());

@@ -1,51 +1,41 @@
 package com.servermonitor.entity;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "servers")
+@Document(collection = "servers")
 public class Server {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(name = "server_name", nullable = false, length = 100)
+    @Indexed
     private String serverName;
 
-    @Column(name = "ip_address", nullable = false, length = 120)
     private String ipAddress;
 
-    @Column(nullable = false)
     private Integer port;
 
-    @Column(length = 10)
     private String protocol = "HTTP"; // HTTP or TCP
 
-    @Column(name = "endpoint_path", length = 255)
     private String endpointPath = "/";
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "current_state", nullable = false, length = 20)
+    @Indexed
     private ServerState currentState = ServerState.ACTIVE;
 
-    @Column(name = "consecutive_successes")
     private Integer consecutiveSuccesses = 0;
 
-    @Column(name = "last_response_time_ms")
     private Long lastResponseTimeMs = 0L;
 
-    @Column(name = "last_checked_at")
     private LocalDateTime lastCheckedAt;
 
-    @Column(name = "slow_threshold_ms")
     private Long slowThresholdMs = 500L;
 
-    @Column(length = 255)
     private String description;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public Server() {
@@ -64,11 +54,11 @@ public class Server {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

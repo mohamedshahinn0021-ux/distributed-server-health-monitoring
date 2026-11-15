@@ -31,7 +31,7 @@ public class ServerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Server>> getServerById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Server>> getServerById(@PathVariable String id) {
         Server server = serverService.getServerById(id);
         return ResponseEntity.ok(ApiResponse.ok("Server found", server));
     }
@@ -46,19 +46,19 @@ public class ServerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Server>> updateServer(@PathVariable Long id, @Valid @RequestBody ServerRequest request) {
+    public ResponseEntity<ApiResponse<Server>> updateServer(@PathVariable String id, @Valid @RequestBody ServerRequest request) {
         Server updated = serverService.updateServer(id, request);
         return ResponseEntity.ok(ApiResponse.ok("Server updated successfully", updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteServer(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteServer(@PathVariable String id) {
         serverService.deleteServer(id);
         return ResponseEntity.ok(ApiResponse.ok("Server deleted successfully", null));
     }
 
     @PostMapping("/{id}/check")
-    public ResponseEntity<ApiResponse<Server>> checkServerNow(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Server>> checkServerNow(@PathVariable String id) {
         Server checked = healthMonitoringService.checkSingleServer(id);
         if (checked != null) {
             return ResponseEntity.ok(ApiResponse.ok("Health check completed for " + checked.getServerName(), checked));

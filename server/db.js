@@ -34,6 +34,18 @@ export function isDbConnected() {
   return isConnected;
 }
 
+export async function disconnectDB() {
+  if (mongoose.connection.readyState !== 0) {
+    try {
+      await mongoose.disconnect();
+      isConnected = false;
+      console.log('[Database] MongoDB connection closed gracefully.');
+    } catch (err) {
+      console.error('[Database] Error disconnecting MongoDB:', err.message);
+    }
+  }
+}
+
 /**
  * Seeds initial servers for instant evaluation
  */

@@ -7,7 +7,6 @@ import com.servermonitor.repository.FailureAlertRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +22,6 @@ public class AlertService {
         this.alertRepository = alertRepository;
     }
 
-    @Transactional
     public FailureAlert recordAlert(Server server, String alertType, ServerState previousState, 
                                     ServerState newState, String description) {
         log.info("EVENT ALERT [{}]: Server '{}' (ID: {}) transitioned from {} -> {}. Description: {}", 
@@ -31,6 +29,7 @@ public class AlertService {
 
         FailureAlert alert = new FailureAlert();
         alert.setServer(server);
+        alert.setServerId(server != null ? server.getId() : null);
         alert.setAlertType(alertType);
         alert.setPreviousState(previousState);
         alert.setNewState(newState);
@@ -49,7 +48,7 @@ public class AlertService {
         return alertRepository.findByOrderByAlertTimeDesc();
     }
 
-    public List<FailureAlert> getAlertsByServer(Long serverId) {
+    public List<FailureAlert> getAlertsByServer(String serverId) {
         return alertRepository.findByServerIdOrderByAlertTimeDesc(serverId);
     }
 
@@ -57,15 +56,13 @@ public class AlertService {
         return alertRepository.countByIsAcknowledgedFalse();
     }
 
-    @Transactional
-    public FailureAlert acknowledgeAlert(Long alertId) {
+    public FailureAlert acknowledgeAlert(String alertId) {
         FailureAlert alert = alertRepository.findById(alertId)
                 .orElseThrow(() -> new IllegalArgumentException("Alert not found with ID: " + alertId));
         alert.setIsAcknowledged(true);
         return alertRepository.save(alert);
     }
 
-    @Transactional
     public void acknowledgeAllAlerts() {
         List<FailureAlert> unacked = alertRepository.findAll();
         for (FailureAlert a : unacked) {
@@ -74,12 +71,10 @@ public class AlertService {
         alertRepository.saveAll(unacked);
     }
 
-    @Transactional
-    public void deleteAlert(Long alertId) {
+    public void deleteAlert(String alertId) {
         alertRepository.deleteById(alertId);
     }
 
-    @Transactional
     public void clearAllAlerts() {
         alertRepository.deleteAll();
     }

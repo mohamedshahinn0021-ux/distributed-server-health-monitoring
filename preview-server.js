@@ -517,10 +517,10 @@ const server = http.createServer(async (req, res) => {
     }
 
     // Single Server Actions
-    const serverMatch = pathname.match(/^\/api\/servers\/(\d+)$/);
+    const serverMatch = pathname.match(/^\/api\/servers\/([a-zA-Z0-9_-]+)$/);
     if (serverMatch) {
-      const id = parseInt(serverMatch[1], 10);
-      const s = servers.find(x => x.id === id);
+      const id = serverMatch[1];
+      const s = servers.find(x => String(x.id) === String(id));
       if (!s) return sendJson(404, { success: false, message: 'Server not found' });
 
       if (method === 'GET') {
@@ -538,15 +538,15 @@ const server = http.createServer(async (req, res) => {
         return sendJson(200, { success: true, data: s });
       }
       if (method === 'DELETE') {
-        servers = servers.filter(x => x.id !== id);
+        servers = servers.filter(x => String(x.id) !== String(id));
         return sendJson(200, { success: true, message: 'Server deleted' });
       }
     }
 
-    const checkMatch = pathname.match(/^\/api\/servers\/(\d+)\/check$/);
+    const checkMatch = pathname.match(/^\/api\/servers\/([a-zA-Z0-9_-]+)\/check$/);
     if (checkMatch && method === 'POST') {
-      const id = parseInt(checkMatch[1], 10);
-      const s = servers.find(x => x.id === id);
+      const id = checkMatch[1];
+      const s = servers.find(x => String(x.id) === String(id));
       if (!s) return sendJson(404, { success: false, message: 'Server not found' });
       await performServerCheck(s);
       return sendJson(200, { success: true, data: s });
@@ -569,10 +569,10 @@ const server = http.createServer(async (req, res) => {
       return sendJson(200, { success: true, data: alerts });
     }
 
-    const ackMatch = pathname.match(/^\/api\/alerts\/(\d+)\/acknowledge$/);
+    const ackMatch = pathname.match(/^\/api\/alerts\/([a-zA-Z0-9_-]+)\/acknowledge$/);
     if (ackMatch && method === 'PUT') {
-      const id = parseInt(ackMatch[1], 10);
-      const a = alerts.find(x => x.id === id);
+      const id = ackMatch[1];
+      const a = alerts.find(x => String(x.id) === String(id));
       if (a) a.isAcknowledged = true;
       return sendJson(200, { success: true, data: a });
     }
@@ -582,10 +582,10 @@ const server = http.createServer(async (req, res) => {
       return sendJson(200, { success: true, message: 'All acknowledged' });
     }
 
-    const delAlertMatch = pathname.match(/^\/api\/alerts\/(\d+)$/);
+    const delAlertMatch = pathname.match(/^\/api\/alerts\/([a-zA-Z0-9_-]+)$/);
     if (delAlertMatch && method === 'DELETE') {
-      const id = parseInt(delAlertMatch[1], 10);
-      alerts = alerts.filter(x => x.id !== id);
+      const id = delAlertMatch[1];
+      alerts = alerts.filter(x => String(x.id) !== String(id));
       return sendJson(200, { success: true, message: 'Alert deleted' });
     }
 

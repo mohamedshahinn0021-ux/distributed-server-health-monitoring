@@ -1,38 +1,34 @@
 package com.servermonitor.entity;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "failure_alerts")
+@Document(collection = "failure_alerts")
 public class FailureAlert {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "server_id", nullable = false)
+    @Indexed
+    private String serverId;
+
     private Server server;
 
-    @Column(name = "alert_type", nullable = false, length = 30)
     private String alertType; // FAILURE, RECOVERY, DEGRADED, RESTORED, STABILIZED
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "previous_state", length = 20)
     private ServerState previousState;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "new_state", nullable = false, length = 20)
     private ServerState newState;
 
-    @Column(name = "failure_description", nullable = false, columnDefinition = "TEXT")
     private String failureDescription;
 
-    @Column(name = "alert_time", nullable = false)
+    @Indexed
     private LocalDateTime alertTime = LocalDateTime.now();
 
-    @Column(name = "is_acknowledged", nullable = false)
+    @Indexed
     private Boolean isAcknowledged = false;
 
     public FailureAlert() {
@@ -40,6 +36,7 @@ public class FailureAlert {
 
     public FailureAlert(Server server, String alertType, ServerState previousState, ServerState newState, String failureDescription) {
         this.server = server;
+        this.serverId = server != null ? server.getId() : null;
         this.alertType = alertType;
         this.previousState = previousState;
         this.newState = newState;
@@ -48,12 +45,20 @@ public class FailureAlert {
         this.isAcknowledged = false;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
+    }
+
+    public String getServerId() {
+        return serverId;
+    }
+
+    public void setServerId(String serverId) {
+        this.serverId = serverId;
     }
 
     public Server getServer() {
@@ -62,6 +67,9 @@ public class FailureAlert {
 
     public void setServer(Server server) {
         this.server = server;
+        if (server != null) {
+            this.serverId = server.getId();
+        }
     }
 
     public String getAlertType() {

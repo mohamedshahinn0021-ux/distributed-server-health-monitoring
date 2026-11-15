@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar.jsx';
-import TopBar from './components/TopBar.jsx';
+import Header from './components/Header.jsx';
 import Toast from './components/Toast.jsx';
 
-import Overview from './pages/Overview.jsx';
-import ServerManagement from './pages/ServerManagement.jsx';
-import LiveMonitoring from './pages/LiveMonitoring.jsx';
-import FailureAlerts from './pages/FailureAlerts.jsx';
-import HistoricalReports from './pages/HistoricalReports.jsx';
-import PerformanceAnalytics from './pages/PerformanceAnalytics.jsx';
-import FSMVisualization from './pages/FSMVisualization.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import Servers from './pages/Servers.jsx';
+import Monitoring from './pages/Monitoring.jsx';
+import Alerts from './pages/Alerts.jsx';
+import History from './pages/History.jsx';
+import Analytics from './pages/Analytics.jsx';
+import FSM from './pages/FSM.jsx';
 import Settings from './pages/Settings.jsx';
 
 import {
@@ -304,17 +304,18 @@ export default function App() {
       />
 
       <div className="main-wrapper">
-        <TopBar
+        <Header
           title={pageHeaders[currentPage]?.title || 'Dashboard'}
           description={pageHeaders[currentPage]?.description || ''}
           onRefresh={refreshAllData}
           isRefreshing={isRefreshing}
           onOpenQuickTest={() => setCurrentPage('settings')}
+          isConnected={isConnected}
         />
 
         <main className="content-body">
           {currentPage === 'overview' && (
-            <Overview
+            <Dashboard
               analyticsData={analyticsData}
               servers={servers}
               onCheckServer={handleCheckServer}
@@ -324,7 +325,7 @@ export default function App() {
           )}
 
           {currentPage === 'servers' && (
-            <ServerManagement
+            <Servers
               servers={servers}
               onAddServer={handleAddServer}
               onUpdateServer={handleUpdateServer}
@@ -336,7 +337,7 @@ export default function App() {
           )}
 
           {currentPage === 'live' && (
-            <LiveMonitoring
+            <Monitoring
               servers={servers}
               livePings={livePings}
               onCheckServer={handleCheckServer}
@@ -346,7 +347,7 @@ export default function App() {
           )}
 
           {currentPage === 'alerts' && (
-            <FailureAlerts
+            <Alerts
               alerts={alerts}
               onMarkRead={handleMarkAlertRead}
               onMarkAllRead={handleMarkAllAlertsRead}
@@ -356,21 +357,21 @@ export default function App() {
           )}
 
           {currentPage === 'reports' && (
-            <HistoricalReports
+            <History
               servers={servers}
               showToast={showToast}
             />
           )}
 
           {currentPage === 'analytics' && (
-            <PerformanceAnalytics
+            <Analytics
               servers={servers}
               analyticsData={analyticsData}
             />
           )}
 
           {currentPage === 'fsm' && (
-            <FSMVisualization
+            <FSM
               servers={servers}
               onCheckServer={handleCheckServer}
               checkingServerId={checkingServerId}

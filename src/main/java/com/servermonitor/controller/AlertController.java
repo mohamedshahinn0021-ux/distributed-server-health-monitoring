@@ -25,7 +25,7 @@ public class AlertController {
     }
 
     @PutMapping("/{id}/acknowledge")
-    public ResponseEntity<ApiResponse<FailureAlert>> acknowledgeAlert(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<FailureAlert>> acknowledgeAlert(@PathVariable String id) {
         FailureAlert alert = alertService.acknowledgeAlert(id);
         return ResponseEntity.ok(ApiResponse.ok("Alert acknowledged", alert));
     }
@@ -37,7 +37,7 @@ public class AlertController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteAlert(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteAlert(@PathVariable String id) {
         alertService.deleteAlert(id);
         return ResponseEntity.ok(ApiResponse.ok("Alert deleted successfully", null));
     }

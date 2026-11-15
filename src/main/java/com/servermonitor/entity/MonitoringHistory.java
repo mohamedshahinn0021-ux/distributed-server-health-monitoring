@@ -1,31 +1,29 @@
 package com.servermonitor.entity;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "monitoring_history")
+@Document(collection = "monitoring_history")
 public class MonitoringHistory {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "server_id", nullable = false)
+    @Indexed
+    private String serverId;
+
     private Server server;
 
-    @Column(name = "response_time_ms", nullable = false)
     private Long responseTimeMs;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
     private ServerState status;
 
-    @Column(name = "checked_at", nullable = false)
+    @Indexed
     private LocalDateTime checkedAt = LocalDateTime.now();
 
-    @Column(name = "error_message", length = 500)
     private String errorMessage;
 
     public MonitoringHistory() {
@@ -33,18 +31,27 @@ public class MonitoringHistory {
 
     public MonitoringHistory(Server server, Long responseTimeMs, ServerState status, String errorMessage) {
         this.server = server;
+        this.serverId = server != null ? server.getId() : null;
         this.responseTimeMs = responseTimeMs;
         this.status = status;
         this.errorMessage = errorMessage;
         this.checkedAt = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
+    }
+
+    public String getServerId() {
+        return serverId;
+    }
+
+    public void setServerId(String serverId) {
+        this.serverId = serverId;
     }
 
     public Server getServer() {
@@ -53,6 +60,9 @@ public class MonitoringHistory {
 
     public void setServer(Server server) {
         this.server = server;
+        if (server != null) {
+            this.serverId = server.getId();
+        }
     }
 
     public Long getResponseTimeMs() {

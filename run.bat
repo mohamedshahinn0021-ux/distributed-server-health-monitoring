@@ -1,15 +1,16 @@
 @echo off
-title Distributed Server Health Monitoring and Failure Detection System
+title Distributed Server Health Monitoring and Failure Detection System (MongoDB)
 cls
 echo =====================================================================
 echo  Distributed Server Health Monitoring and Failure Detection System
+echo  Backend: Spring Boot + MongoDB | Frontend: Bootstrap 5 + Chart.js
 echo =====================================================================
 echo.
 
-echo Choose your preferred runtime environment:
-echo [1] Java Spring Boot Backend (Full Enterprise Stack with MySQL/H2)
+echo Choose your preferred execution mode:
+echo [1] Java Spring Boot Backend (MongoDB Local / Atlas)
 echo [2] Instant Preview Server (Node.js - Zero Setup Required)
-echo [3] Open MySQL Schema in Notepad
+echo [3] View MongoDB Init Script in Notepad (database\init_mongo.js)
 echo [4] Exit
 echo.
 set /p choice="Enter option [1, 2, 3, or 4]: "
@@ -29,7 +30,7 @@ if %ERRORLEVEL% NEQ 0 (
     pause
     goto exit_script
 )
-echo Starting Spring Boot application with Maven...
+echo Starting Spring Boot application with MongoDB...
 echo Access URL: http://localhost:8080
 echo Admin Login: admin / admin123
 start "" http://localhost:8080
@@ -48,7 +49,7 @@ pause
 goto exit_script
 
 :open_schema
-notepad database\schema.sql
+notepad database\init_mongo.js
 goto exit_script
 
 :exit_script

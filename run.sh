@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # =====================================================================
 # Distributed Server Health Monitoring and Failure Detection System
-# Startup Script for Linux / macOS
+# Startup Script for Linux / macOS (MongoDB)
 # =====================================================================
 
 set -e
 echo "====================================================================="
 echo " Distributed Server Health Monitoring and Failure Detection System"
+echo " Backend: Spring Boot + MongoDB"
 echo "====================================================================="
 echo ""
 echo "Select execution mode:"
-echo "1) Java Spring Boot Backend (Maven + MySQL/H2)"
+echo "1) Java Spring Boot Backend (Maven + MongoDB)"
 echo "2) Instant Preview Server (Node.js)"
 read -p "Enter choice [1 or 2]: " choice
 

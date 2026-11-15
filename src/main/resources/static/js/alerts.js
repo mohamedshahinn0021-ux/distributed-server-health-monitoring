@@ -75,7 +75,7 @@ function renderRecentAlertsWidget() {
               </span>
             ` : ''}
             ${!alert.isAcknowledged ? `
-              <button class="btn btn-link btn-sm p-0 ms-auto text-decoration-none small" onclick="acknowledgeAlertItem(${alert.id})">
+              <button class="btn btn-link btn-sm p-0 ms-auto text-decoration-none small" onclick="acknowledgeAlertItem('${alert.id}')">
                 <i class="fas fa-check me-1"></i>Ack
               </button>
             ` : '<span class="ms-auto text-muted small"><i class="fas fa-check-double text-success"></i></span>'}
@@ -129,11 +129,11 @@ function renderAlertsTable() {
         <td class="text-end">
           <div class="btn-group btn-group-sm">
             ${!alert.isAcknowledged ? `
-              <button class="btn btn-outline-success" title="Acknowledge Alert" onclick="acknowledgeAlertItem(${alert.id})">
+              <button class="btn btn-outline-success" title="Acknowledge Alert" onclick="acknowledgeAlertItem('${alert.id}')">
                 <i class="fas fa-check"></i>
               </button>
             ` : ''}
-            <button class="btn btn-outline-danger" title="Delete Alert" onclick="deleteAlertItem(${alert.id})">
+            <button class="btn btn-outline-danger" title="Delete Alert" onclick="deleteAlertItem('${alert.id}')">
               <i class="fas fa-trash-alt"></i>
             </button>
           </div>

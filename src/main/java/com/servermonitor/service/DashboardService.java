@@ -40,8 +40,17 @@ public class DashboardService {
         long recovering = serverRepository.countByCurrentState(ServerState.RECOVERING);
         long unacknowledgedAlerts = alertRepository.countByIsAcknowledgedFalse();
 
-        Double avgResponseTime = historyRepository.findAverageHealthyResponseTime();
-        long avgMs = (avgResponseTime != null) ? Math.round(avgResponseTime) : 0L;
+        // Calculate average response time over recent healthy history
+        List<MonitoringHistory> recent = historyRepository.findTop100ByOrderByCheckedAtDesc();
+        long sum = 0;
+        int count = 0;
+        for (MonitoringHistory h : recent) {
+            if (h.getStatus() != ServerState.DISCONNECTED && h.getResponseTimeMs() != null && h.getResponseTimeMs() > 0) {
+                sum += h.getResponseTimeMs();
+                count++;
+            }
+        }
+        long avgMs = (count > 0) ? Math.round((double) sum / count) : 0L;
 
         double healthPercentage = (total > 0) ? Math.round(((double) active / total) * 1000.0) / 10.0 : 0.0;
 
@@ -58,7 +67,7 @@ public class DashboardService {
     }
 
     /**
-     * Prepares historical response time dataset for Chart.js
+     * Prepares historical response time dataset for Chart.js from MongoDB
      */
     public ChartDataDto getResponseTimeChartData() {
         List<Server> servers = serverRepository.findAll();
@@ -74,8 +83,10 @@ public class DashboardService {
 
             List<Long> points = new ArrayList<>();
             for (MonitoringHistory h : histories) {
-                points.add(h.getResponseTimeMs());
-                labelSet.add(h.getCheckedAt().format(formatter));
+                points.add(h.getResponseTimeMs() != null ? h.getResponseTimeMs() : 0L);
+                if (h.getCheckedAt() != null) {
+                    labelSet.add(h.getCheckedAt().format(formatter));
+                }
             }
 
             if (!points.isEmpty()) {

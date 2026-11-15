@@ -25,7 +25,7 @@ public class HistoryController {
     }
 
     @GetMapping("/server/{serverId}")
-    public ResponseEntity<ApiResponse<List<MonitoringHistory>>> getHistoryByServer(@PathVariable Long serverId) {
+    public ResponseEntity<ApiResponse<List<MonitoringHistory>>> getHistoryByServer(@PathVariable String serverId) {
         List<MonitoringHistory> history = historyRepository.findByServerIdOrderByCheckedAtDesc(serverId);
         return ResponseEntity.ok(ApiResponse.ok("History for server " + serverId + " retrieved", history));
     }

@@ -4,9 +4,10 @@ import com.servermonitor.dto.ServerRequest;
 import com.servermonitor.entity.Server;
 import com.servermonitor.entity.ServerState;
 import com.servermonitor.exception.ResourceNotFoundException;
+import com.servermonitor.repository.FailureAlertRepository;
+import com.servermonitor.repository.MonitoringHistoryRepository;
 import com.servermonitor.repository.ServerRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,21 +16,26 @@ import java.util.List;
 public class ServerService {
 
     private final ServerRepository serverRepository;
+    private final MonitoringHistoryRepository historyRepository;
+    private final FailureAlertRepository alertRepository;
 
-    public ServerService(ServerRepository serverRepository) {
+    public ServerService(ServerRepository serverRepository,
+                         MonitoringHistoryRepository historyRepository,
+                         FailureAlertRepository alertRepository) {
         this.serverRepository = serverRepository;
+        this.historyRepository = historyRepository;
+        this.alertRepository = alertRepository;
     }
 
     public List<Server> getAllServers() {
         return serverRepository.findAllByOrderByServerNameAsc();
     }
 
-    public Server getServerById(Long id) {
+    public Server getServerById(String id) {
         return serverRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Server not found with ID: " + id));
     }
 
-    @Transactional
     public Server createServer(ServerRequest request) {
         Server server = new Server();
         server.setServerName(request.getServerName().trim());
@@ -49,8 +55,7 @@ public class ServerService {
         return serverRepository.save(server);
     }
 
-    @Transactional
-    public Server updateServer(Long id, ServerRequest request) {
+    public Server updateServer(String id, ServerRequest request) {
         Server server = getServerById(id);
 
         server.setServerName(request.getServerName().trim());
@@ -70,9 +75,11 @@ public class ServerService {
         return serverRepository.save(server);
     }
 
-    @Transactional
-    public void deleteServer(Long id) {
+    public void deleteServer(String id) {
         Server server = getServerById(id);
+        // Cascade delete related logs and alerts in MongoDB
+        historyRepository.deleteByServerId(id);
+        alertRepository.deleteByServerId(id);
         serverRepository.delete(server);
     }
 }

@@ -116,13 +116,13 @@ function renderServerTable() {
         </td>
         <td class="text-end">
           <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-primary" title="Check Health Now" onclick="triggerCheckServer(${server.id}, this)">
+            <button class="btn btn-outline-primary" title="Check Health Now" onclick="triggerCheckServer('${server.id}', this)">
               <i class="fas fa-sync-alt"></i>
             </button>
-            <button class="btn btn-outline-secondary" title="Edit Server" onclick="openEditModal(${server.id})">
+            <button class="btn btn-outline-secondary" title="Edit Server" onclick="openEditModal('${server.id}')">
               <i class="fas fa-edit"></i>
             </button>
-            <button class="btn btn-outline-danger" title="Delete Server" onclick="confirmDeleteServer(${server.id}, '${escapeHtml(server.serverName)}')">
+            <button class="btn btn-outline-danger" title="Delete Server" onclick="confirmDeleteServer('${server.id}', '${escapeHtml(server.serverName)}')">
               <i class="fas fa-trash-alt"></i>
             </button>
           </div>
