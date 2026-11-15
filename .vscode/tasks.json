@@ -2,57 +2,26 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "1. Start Backend Server (Port 5000)",
+      "label": "🚀 Start Server (npm start)",
       "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/server"
-      },
+      "command": "npm start",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
-        "panel": "dedicated",
-        "group": "servers"
-      }
-    },
-    {
-      "label": "2. Start Frontend Client (Port 3000)",
-      "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/client"
-      },
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "group": "servers"
-      }
-    },
-    {
-      "label": "3. Run FSM & Security Unit Tests",
-      "type": "shell",
-      "command": "node test-fsm.js",
-      "options": {
-        "cwd": "${workspaceFolder}/server"
-      },
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "4. Install All Dependencies",
-      "type": "shell",
-      "command": "npm run install:all",
-      "options": {
-        "cwd": "${workspaceFolder}"
+        "panel": "dedicated"
       },
       "group": {
         "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "🧪 Run System Verification Tests",
+      "type": "shell",
+      "command": "node test-system.js",
+      "group": {
+        "kind": "test",
         "isDefault": true
       },
       "problemMatcher": []
