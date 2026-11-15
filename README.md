@@ -1,386 +1,308 @@
 # Distributed Server Health Monitoring and Failure Detection System
 
-[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-blue)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-green)](https://nodejs.org/)
-[![MongoDB](https://img.shields.io/badge/Database-MongoDB%20%2B%20Mongoose-darkgreen)](https://www.mongodb.com/)
-[![Socket.IO](https://img.shields.io/badge/Real--Time-Socket.IO-black)](https://socket.io/)
-[![FSM](https://img.shields.io/badge/Architecture-Finite--State%20Machine-orange)]()
-[![Security](https://img.shields.io/badge/Security-SSRF%20Guarded-red)]()
+[![Node.js](https://img.shields.io/badge/Node.js-v18%2B-green.svg)](https://nodejs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-4.x-blue.svg)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose%208-brightgreen.svg)](https://www.mongodb.com/)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-4.x%20Real--Time-black.svg)](https://socket.io/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg)](https://getbootstrap.com/)
+[![Chart.js](https://img.shields.io/badge/Chart.js-4.4-orange.svg)](https://www.chartjs.org/)
 
-A production-grade, advanced distributed server monitoring platform built for college assessment submission. Continuously checks configured server endpoints via HTTP/HTTPS, measures millisecond response times and status codes, and utilizes a deterministic **Finite-State Machine (FSM)** with consecutive-failure filters to classify servers into **ACTIVE**, **SLOW**, **DISCONNECTED**, and **RECOVERING** states in real time.
+A production-grade, advanced enterprise web application designed to continuously monitor distributed servers through network connectivity checks, HTTP health checks, and precision response-time measurements.
 
----
-
-## 1. Features & Capabilities
-
-- **Real-Time Telemetry Streaming**: Socket.IO bi-directional WebSocket connection updates the dashboard live without needing page refreshes.
-- **Finite-State Machine (FSM) Engine**:
-  - Deterministic state transitions with consecutive failure/success verification counters.
-  - Mitigates network flapping and avoids premature outage declarations.
-  - Persists full transition audit history with trigger reasons and millisecond metrics.
-- **SSRF & Security Defense**:
-  - Validates and sanitizes health-check URLs.
-  - Enforces strict HTTP/HTTPS protocol whitelist.
-  - Disallows internal and private IP ranges (RFC 1918: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`).
-  - Restricts cloud metadata endpoints (`169.254.169.254`, `metadata.google.internal`).
-  - Blocks open-redirect SSRF bypasses via `maxRedirects: 0`.
-- **Modern Dark-Themed UI**:
-  - Dark navy theme (`#0b1120`, `#0f172a`, `#131d33`) with cyan and blue neon accents.
-  - Standardized state colors: **Active** (Green `#22c55e`), **Slow** (Yellow `#eab308`), **Disconnected** (Red `#ef4444`), **Recovering** (Blue `#3b82f6`).
-  - Interactive Recharts (Donut status distribution, real-time response time curves, latency vs threshold comparisons).
-  - Responsive layout with desktop sidebar, mobile drawer, modal forms, and toast notifications.
-- **8 Dedicated Modules & Pages**:
-  1. **Overview Dashboard**: High-level KPIs, status distribution, response time trends, recent alerts, recent transitions, and server status table.
-  2. **Server Management**: Full CRUD interface with URL validation, enable/disable toggle, threshold configuration, and diagnostics.
-  3. **Live Monitoring**: Real-time Socket.IO packet feed with animated pulse cards and latency bars.
-  4. **Failure Alerts**: Severity-filtered alert center (Critical, Warning, Info, Success) with read/unread tracking and de-duplication.
-  5. **Historical Reports**: Time-series historical records, uptime percentages, paginated audit tables, and **CSV Export**.
-  6. **Performance Analytics**: Health scores (0-100), latency grading (A+ to F), and threshold violation tracking.
-  7. **FSM Visualization**: Visual state machine diagram with real-time highlighted nodes matching live server state and transition logs.
-  8. **Settings & Safe Test Simulator**: One-click test presets to simulate normal latency, slow degradation, outages, and recoveries without external dependencies!
+The system features an automated **Finite State Machine (FSM)** engine that dynamically evaluates server conditions into four states: **ACTIVE**, **SLOW**, **DISCONNECTED**, and **RECOVERING**, accompanied by real-time failure detection, alert generation, and interactive dashboard telemetry via WebSockets.
 
 ---
 
-## 2. Finite-State Machine (FSM) Architecture
+## 1. System Architecture & Objective
 
+The objective is to provide site reliability engineers (SRE) and system administrators with complete visibility into distributed server fleets.
+
+### Finite State Machine (FSM) States
+| State | Badge Color | Description |
+|---|---|---|
+| **ACTIVE** | 🟢 **Green** (`#10b981`) | Server is responding normally with HTTP 2xx/3xx and latency within configured threshold. |
+| **SLOW** | 🟡 **Yellow** (`#f59e0b`) | Server is responding, but response latency exceeds configured milliseconds threshold. |
+| **DISCONNECTED** | 🔴 **Red** (`#ef4444`) | Server is unreachable or health checks repeatedly fail ($\ge$ 3 consecutive failures). |
+| **RECOVERING** | 🔵 **Blue** (`#3b82f6`) | A previously disconnected server has started responding again and is being verified for stability ($\ge$ 3 checks). |
+
+### Valid State Transitions
 ```
-                 Latency > Threshold
-     ┌───────────────────────────────────────────────┐
-     │                                               ▼
-┌─────────┐                                    ┌───────────┐
-│ ACTIVE  │ ◄────────────────────────────────  │   SLOW    │
-└─────────┘         Latency <= Threshold       └───────────┘
-   │   ▲                                             │
-   │   │                                             │
-   │   │ >= 2 Successes Verified                     │
-   │   │                                             │
-   │ ┌────────────┐                                  │
-   │ │ RECOVERING │ ◄── 1st Successful Check ──┐     │
-   │ └────────────┘                            │     │
-   │   │                                       │     │
-   │   │ Check Failed                          │     │
-   │   ▼                                       │     │
-   │ ┌─────────────────────────────────────────┴───┐ │
-   └─►                DISCONNECTED                 │◄┘
-     │        (>= 2 Consecutive Failures)          │
-     └─────────────────────────────────────────────┘
+                Latency > Threshold
+     ┌───────────────────────────────────────┐
+     │                                       ▼
+┌─────────┐      Latency <= Threshold      ┌──────────┐
+│         │ ◄───────────────────────────── │          │
+│ ACTIVE  │                                │   SLOW   │
+│         │ ─── Repeated Failures (>=3) ──►│          │
+└─────────┘                                └──────────┘
+     │                                           │
+     │ Repeated Failures (>=3)                   │ Repeated Failures (>=3)
+     ▼                                           ▼
+┌─────────────────────────────────────────────────────┐
+│                    DISCONNECTED                     │
+└─────────────────────────────────────────────────────┘
+     │                                           ▲
+     │ Reachable probe (1st success)             │ Probe fails during recovery
+     ▼                                           │
+┌─────────────────────────────────────────────────────┐
+│                     RECOVERING                      │
+└─────────────────────────────────────────────────────┘
+     │
+     └── 3 Consecutive Successes ─────────────► ACTIVE (or SLOW if latency high)
 ```
 
-### State Definitions & Transition Matrix
-
-| Current State | Event / Metric | Next State | Condition & Trigger |
-| :--- | :--- | :--- | :--- |
-| **ACTIVE** | Response time > Threshold | **SLOW** | High latency detected |
-| **ACTIVE** | Health-check fails | **DISCONNECTED** | Consecutive failures $\ge 2$ |
-| **SLOW** | Response time $\le$ Threshold | **ACTIVE** | Latency normalized |
-| **SLOW** | Health-check fails | **DISCONNECTED** | Consecutive failures $\ge 2$ |
-| **DISCONNECTED** | 1st HTTP 2xx/3xx response | **RECOVERING** | Initial recovery verification initiated |
-| **RECOVERING** | Consecutive successes $\ge 2$ | **ACTIVE** | Full health verified with consecutive checks |
-| **RECOVERING** | Health-check fails | **DISCONNECTED** | Verification failed; returns to outage state |
-
 ---
 
-## 3. Technology Stack
+## 2. Technology Stack
 
 ### Frontend
-- **React.js 18**
-- **Vite 6**
-- **HTML5 & CSS3** (Custom Dark Navy Theme)
-- **Recharts** (Interactive Donut, Bar, and Line charts)
-- **Lucide React** (Modern iconography)
-- **Socket.IO Client** (Real-time telemetry)
-- **Axios** (REST client)
+- **HTML5 & CSS3**: Modern glassmorphic enterprise styling, custom scrollbars, and pulsing animations.
+- **JavaScript (ES6+)**: Clean, asynchronous event-driven client architecture.
+- **Bootstrap 5**: Responsive layout, modal dialogs, badges, and utility classes.
+- **Chart.js**: Interactive real-time latency bar/line graphs and donut health distributions.
+- **Socket.IO Client**: Zero-refresh bi-directional WebSocket streaming.
 
 ### Backend
-- **Node.js 20+**
-- **Express.js 4**
-- **Socket.IO 4** (Full-duplex WebSocket server)
-- **Mongoose 8** (Object Data Modeling)
-- **Axios** (Health-check network engine)
-- **Express Rate Limit** (Anti-abuse protection)
-
-### Database
-- **MongoDB** / MongoDB Atlas
-- **Mongoose Schemas**: `Server`, `MonitoringHistory`, `Alert`, `StateTransition`
-- *Note*: An in-memory datastore adapter is included automatically so the application starts and functions completely even if a local MongoDB service is not running on the examiner's computer.
+- **Node.js & Express.js**: High-performance asynchronous REST API server.
+- **`server.js`**: Main backend application entry point.
+- **MongoDB & Mongoose**: Object Data Modeling (ODM) with indexes and relationships.
+- **Resilient Dual Storage**: Native MongoDB connection with automatic, zero-config in-memory fallback for offline test environments.
+- **Axios**: Precision HTTP health check probing.
+- **Socket.IO**: Real-time broadcast engine (`server_health_update`, `server_status_transition`, `new_alert`).
+- **PBKDF2 & JWT Security**: Military-grade password hashing and tokenized route protection.
+- **SSRF Defense**: Strict HTTP/HTTPS validation blocking internal metadata addresses (`169.254.169.254`).
 
 ---
 
-## 4. Project Structure
+## 3. Project Directory Structure
 
 ```
 distributed-server-monitor/
-├── client/                     # React Frontend
-│   ├── src/
-│   │   ├── components/         # Sidebar, TopBar, StateBadge, Toast
-│   │   ├── pages/
-│   │   │   ├── Overview.jsx            # Page 1: Overview Dashboard
-│   │   │   ├── ServerManagement.jsx    # Page 2: Server CRUD Management
-│   │   │   ├── LiveMonitoring.jsx      # Page 3: Real-Time Ping Feed
-│   │   │   ├── FailureAlerts.jsx       # Page 4: Incident & Alert Center
-│   │   │   ├── HistoricalReports.jsx   # Page 5: Time-series & CSV Export
-│   │   │   ├── PerformanceAnalytics.jsx# Page 6: Health Scores & Grading
-│   │   │   ├── FSMVisualization.jsx    # Page 7: Interactive FSM Diagram
-│   │   │   └── Settings.jsx            # Page 8: Settings & Test Simulator
-│   │   ├── services/           # API Client & Socket.IO singleton
-│   │   ├── App.jsx             # Root React Application component
-│   │   ├── main.jsx            # Vite DOM Mount
-│   │   └── style.css           # Dark Navy Stylesheet & CSS Variables
-│   ├── index.html              # HTML5 entry with fonts
-│   ├── vite.config.js          # Vite config & API reverse proxy
-│   ├── .env.example
-│   └── package.json
+├── server.js                          # Root Backend Entry Point
+├── package.json                       # Project configuration & npm scripts
+├── test-system.js                     # Automated 35-test integration suite
 │
-├── server/                     # Node.js Express Backend
+├── backend/                           # Complete Modular Backend Structure
+│   ├── server.js                      # Main Express & Socket.IO initialization
+│   ├── .env                           # Environment variables configuration
+│   ├── .env.example                   # Environment template
+│   ├── package.json                   # Backend dependencies manifest
+│   ├── config/
+│   │   └── db.js                      # MongoDB connection & dual-mode fallback
 │   ├── models/
-│   │   ├── Server.js           # Server registration schema
-│   │   ├── MonitoringHistory.js# Time-series check records schema
-│   │   ├── Alert.js            # De-duplicated failure alerts schema
-│   │   └── StateTransition.js  # FSM state transition audit schema
+│   │   ├── Admin.js                   # Administrator user Mongoose model
+│   │   ├── Server.js                  # Target server Mongoose model
+│   │   ├── MonitoringHistory.js       # Historical probe record model
+│   │   └── Alert.js                   # Failure & warning alert model
+│   ├── controllers/
+│   │   ├── authController.js          # Authentication (login/register/profile)
+│   │   ├── serverController.js        # Server fleet management (CRUD)
+│   │   ├── monitoringController.js    # Health checks & dashboard KPIs
+│   │   └── alertController.js         # Alerts management & filters
 │   ├── routes/
-│   │   ├── serverRoutes.js     # /api/servers & /api/monitoring endpoints
-│   │   ├── alertRoutes.js      # /api/alerts endpoints
-│   │   └── analyticsRoutes.js  # /api/analytics & /api/fsm endpoints
+│   │   ├── authRoutes.js              # /api/auth endpoints
+│   │   ├── serverRoutes.js            # /api/servers endpoints
+│   │   ├── monitoringRoutes.js        # /api/monitoring endpoints
+│   │   ├── alertRoutes.js             # /api/alerts endpoints
+│   │   └── mockRoutes.js              # /api/mock test endpoints
 │   ├── services/
-│   │   ├── fsmService.js       # Finite-State Machine Transition Engine
-│   │   ├── monitoringService.js# Recurring scheduler & Axios health-checks
-│   │   └── alertService.js     # Alert creation & Socket.IO broadcaster
-│   ├── mock/
-│   │   └── mockRoutes.js       # Safe test endpoints (/api/mock/*)
+│   │   ├── fsmService.js              # Finite State Machine implementation
+│   │   ├── monitoringService.js       # Continuous scheduler & HTTP probes
+│   │   ├── failureDetectionService.js # Downtime detection & alert triggers
+│   │   └── alertService.js            # Alert storage & deduplication
 │   ├── middleware/
-│   │   └── errorHandler.js     # Centralized error handler
-│   ├── utils/
-│   │   └── validator.js        # SSRF barrier & URL security checks
-│   ├── db.js                   # MongoDB connection & fallback adapter
-│   ├── test-fsm.js             # Automated Unit & FSM test suite
-│   ├── index.js                # Server entry point & Socket.IO server
-│   ├── .env.example
-│   └── package.json
+│   │   └── authMiddleware.js          # JWT Bearer token route guard
+│   └── utils/
+│       ├── responseTime.js            # Health checker & SSRF validator
+│       └── cryptoAuth.js              # PBKDF2 hashing & JWT utilities
 │
-├── package.json                # Root scripts (install:all, server, client)
-├── .gitignore
-└── README.md
+└── frontend/                          # Professional Frontend Dashboard
+    ├── index.html                     # Enterprise landing page & portal
+    ├── login.html                     # Admin login & registration page
+    ├── dashboard.html                 # Main monitoring dashboard
+    ├── servers.html                   # Server fleet management interface
+    ├── monitoring.html                # Live console & FSM simulator
+    ├── alerts.html                    # Failure detection alerts center
+    ├── history.html                   # Historical reports & latency trends
+    ├── css/
+    │   ├── style.css                  # Theme variables (Dark/Light) & base CSS
+    │   └── dashboard.css              # Widgets, cards, and chart styles
+    └── js/
+        ├── auth.js                    # Session management & route protection
+        ├── dashboard.js               # Dashboard charts & live Socket.IO feed
+        ├── servers.js                 # Server CRUD & modal handlers
+        ├── monitoring.js              # Real-time console & simulator controls
+        ├── alerts.js                  # Alert filtering & actions
+        └── history.js                 # History charts & uptime calculations
 ```
 
 ---
 
-## 5. Quick Start & Installation
+## 4. Database Collections & Schema Design
+
+### Admin Collection
+```javascript
+{
+  username:  { type: String, required: true, unique: true },
+  email:     { type: String, required: true, unique: true, lowercase: true },
+  password:  { type: String, required: true }, // PBKDF2/bcrypt hash
+  createdAt: { type: Date, default: Date.now }
+}
+```
+
+### Server Collection
+```javascript
+{
+  serverName:             { type: String, required: true },
+  serverUrl:              { type: String, required: true },
+  description:            { type: String, default: '' },
+  monitoringInterval:     { type: Number, default: 10 },   // In seconds (3-3600)
+  responseTimeThreshold:  { type: Number, default: 500 },  // In ms (20-30000)
+  currentStatus:          { type: String, enum: ['ACTIVE', 'SLOW', 'DISCONNECTED', 'RECOVERING'], default: 'ACTIVE' },
+  isMonitoring:           { type: Boolean, default: true },
+  consecutiveFailures:    { type: Number, default: 0 },
+  consecutiveSuccesses:   { type: Number, default: 0 },
+  lastResponseTime:       { type: Number, default: 0 },
+  lastStatusCode:         { type: Number, default: 0 },
+  lastCheckedAt:          { type: Date, default: null },
+  createdAt:              { type: Date, default: Date.now },
+  updatedAt:              { type: Date, default: Date.now }
+}
+```
+
+### MonitoringHistory Collection
+```javascript
+{
+  serverId:     { type: ObjectId, ref: 'Server', required: true, index: true },
+  responseTime: { type: Number, required: true },
+  statusCode:   { type: Number, required: true },
+  healthStatus: { type: String, enum: ['ACTIVE', 'SLOW', 'DISCONNECTED', 'RECOVERING'], required: true },
+  isReachable:  { type: Boolean, required: true },
+  checkedAt:    { type: Date, default: Date.now, index: true },
+  errorMessage: { type: String, default: null }
+}
+```
+
+### Alert Collection
+```javascript
+{
+  serverId:   { type: ObjectId, ref: 'Server', required: true, index: true },
+  alertType:  { type: String, enum: ['DISCONNECTED', 'SLOW_PERFORMANCE', 'RECOVERING', 'RECOVERY_COMPLETED', 'INFO'], default: 'DISCONNECTED' },
+  message:    { type: String, required: true },
+  severity:   { type: String, enum: ['CRITICAL', 'WARNING', 'INFO', 'SUCCESS'], default: 'INFO' },
+  isRead:     { type: Boolean, default: false, index: true },
+  createdAt:  { type: Date, default: Date.now, index: true }
+}
+```
+
+---
+
+## 5. REST API Documentation
+
+### Authentication
+- `POST /api/auth/register` - Create a new administrator account.
+- `POST /api/auth/login` - Authenticate administrator & return JWT token.
+- `GET /api/auth/profile` - Get current authenticated admin details *(Protected)*.
+
+### Server Management
+- `GET /api/servers` - List all registered servers (Supports `?status=&search=`).
+- `POST /api/servers` - Register a new target server *(Protected)*.
+- `GET /api/servers/:id` - Fetch details for a specific server.
+- `PUT /api/servers/:id` - Update server URL, threshold, or interval *(Protected)*.
+- `PATCH /api/servers/:id/toggle` - Pause or resume monitoring for a server *(Protected)*.
+- `DELETE /api/servers/:id` - Cascade delete server, history, and alerts *(Protected)*.
+
+### Health Monitoring & History
+- `GET /api/monitoring/status` - Aggregated dashboard metrics, state counts, and availability percentage.
+- `GET /api/monitoring/:serverId` - Single server status with latest history.
+- `POST /api/monitoring/:serverId/check` - Trigger an immediate manual probe.
+- `GET /api/monitoring/history/:serverId` - Historical records with date filtering (`?startDate=&endDate=&limit=`).
+
+### Alerts
+- `GET /api/alerts` - List alerts (Supports `?severity=&isRead=&limit=`).
+- `GET /api/alerts/:id` - Fetch single alert by ID.
+- `PUT /api/alerts/:id/read` - Mark specific alert as read *(Protected)*.
+- `PUT /api/alerts/read-all` - Mark all alerts as read *(Protected)*.
+- `DELETE /api/alerts/:id` - Delete an alert *(Protected)*.
+- `DELETE /api/alerts/clear-all` - Permanently clear all alerts *(Protected)*.
+
+### Mock Simulation Endpoints (For Demonstration & Assessment)
+- `GET /api/mock/healthy` - Responds within 20-50ms (tests `ACTIVE`).
+- `GET /api/mock/slow` - Delays 800ms+ (tests `SLOW`).
+- `GET /api/mock/error` - Returns HTTP 500 (tests `DISCONNECTED`).
+- `GET /api/mock/flaky` - Cyclic mode testing `RECOVERING` $\rightarrow$ `ACTIVE`.
+- `POST /api/mock/set-state` - Dynamically toggle simulation behavior from UI.
+
+---
+
+## 6. Installation & Execution Guide
 
 ### Prerequisites
 - **Node.js** (v18.0.0 or higher recommended)
-- **npm** (v9.0.0 or higher)
-- Optional: **MongoDB** running locally or a free **MongoDB Atlas** connection string.
+- **MongoDB** (Local instance or MongoDB Atlas connection string)
+  - *Note: If MongoDB is not running locally, the application automatically initializes an active in-memory operational engine so you can evaluate the platform instantly!*
 
 ### Step 1: Clone or Navigate to the Project
-
-Open PowerShell in VS Code:
-```powershell
-cd "C:\Users\moham\.gemini\antigravity\scratch\distributed-server-monitor"
+```bash
+cd distributed-server-monitor
 ```
 
-### Step 2: Install Dependencies
-
-You can install all dependencies with one command from the project root:
-```powershell
-npm run install:all
-```
-*Or install individually:*
-```powershell
-cd server; npm install
-cd ../client; npm install
-cd ..
-```
-
-### Step 3: Configure Environment Variables
-
-The project comes pre-configured with default `.env` files:
-
-**`server/.env`**:
+### Step 2: Environment Configuration
+Create or review `backend/.env`:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/distributed_server_monitor
-CLIENT_URL=http://localhost:3000
-NODE_ENV=development
+JWT_SECRET=super_secure_server_monitoring_secret_key_2026
+CLIENT_URL=http://localhost:5000
 ```
 
-**`client/.env`**:
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_SOCKET_URL=http://localhost:5000
+### Step 3: Run the Automated Verification Suite
+Verify all 35 system and integration tests:
+```bash
+node test-system.js
 ```
+Expected output: `🎉 TEST SUMMARY: 35 PASSED, 0 FAILED`.
+
+### Step 4: Start the Application
+Run the root `server.js` entry point:
+```bash
+npm start
+# OR directly:
+node server.js
+```
+
+### Step 5: Access the Web Dashboard
+Open your browser and navigate to:
+```
+http://localhost:5000
+```
+- **Admin Dashboard**: `http://localhost:5000/dashboard.html`
+- **Admin Login**: `http://localhost:5000/login.html`
+- **Server Fleet**: `http://localhost:5000/servers.html`
+- **Live Console**: `http://localhost:5000/monitoring.html`
+- **Alerts Center**: `http://localhost:5000/alerts.html`
+- **Historical Reports**: `http://localhost:5000/history.html`
+
+### Default Evaluation Credentials
+- **Username**: `admin`
+- **Password**: `admin123`
 
 ---
 
-## 6. Running the Application
+## 7. Interactive Evaluation & Demonstration Walkthrough
 
-### Option A: Run Server and Client (Two PowerShell Windows)
-
-**Terminal 1 (Backend Server):**
-```powershell
-cd "C:\Users\moham\.gemini\antigravity\scratch\distributed-server-monitor\server"
-npm run dev
-```
-*The backend starts at `http://localhost:5000` with WebSocket support.*
-
-**Terminal 2 (Frontend Client):**
-```powershell
-cd "C:\Users\moham\.gemini\antigravity\scratch\distributed-server-monitor\client"
-npm run dev
-```
-*The frontend starts at `http://localhost:3000`.*
-
-Open your browser to: **`http://localhost:3000`**
+1. **Sign In**: Visit `http://localhost:5000/login.html` and sign in with `admin` / `admin123`.
+2. **Dashboard Overview**: Check the 7 KPI cards, the response-time comparison chart, and the FSM distribution doughnut.
+3. **Register a Server**: Go to **Server Management**, click **Add New Server**, enter a name and target URL (e.g. `https://1.1.1.1` or `http://localhost:5000/api/mock/healthy`).
+4. **Trigger Manual Probes**: Click the **Check** button on any server row to run an immediate on-demand health check.
+5. **Interactive FSM Simulator**:
+   - Go to **Live Console** (`monitoring.html`).
+   - Click **Force Slow Latency**: Watch the node transition to 🟡 **SLOW** with warning alerts.
+   - Click **Inject Failure**: Watch the node fail health checks and transition to 🔴 **DISCONNECTED** with a Critical Alert.
+   - Click **Cyclic Recovery**: Watch the node begin stability probing (🔵 **RECOVERING**) and transition back to 🟢 **ACTIVE** after 3 consecutive successful checks!
+6. **Dark / Light Theme**: Click the theme toggle icon in the top header to seamlessly switch themes.
 
 ---
 
-## 7. Running Unit & FSM Tests
-
-To verify the FSM transitions, anti-flapping rules, and SSRF security validations:
-
-```powershell
-cd "C:\Users\moham\.gemini\antigravity\scratch\distributed-server-monitor\server"
-node test-fsm.js
-```
-
-Expected output:
-```
-====================================================
-🧪 RUNNING COMPREHENSIVE FSM & SECURITY UNIT TESTS
-====================================================
---- 1. Security & SSRF Protection Tests ---
-  ✓ PASS: 127.0.0.1 recognized as private/loopback
-  ✓ PASS: 10.0.1.5 recognized as private RFC 1918
-  ✓ PASS: 169.254.169.254 recognized as AWS/GCP metadata IP
-  ✓ PASS: Safe built-in mock endpoint permitted
-  ✓ PASS: AWS/Cloud metadata SSRF endpoint blocked
-  ✓ PASS: Non-HTTP/HTTPS protocol (FTP) rejected
-  ✓ PASS: Valid public HTTPS URL approved
-
---- 2. FSM State Transition Engine Tests ---
-  ✓ PASS: Normal latency preserves ACTIVE state
-  ✓ PASS: High latency transitions ACTIVE -> SLOW
-  ✓ PASS: Latency normalization transitions SLOW -> ACTIVE
-  ✓ PASS: 1st failure increments counter without flapping
-  ✓ PASS: 2nd consecutive failure transitions to DISCONNECTED
-  ✓ PASS: First successful check transitions DISCONNECTED -> RECOVERING
-  ✓ PASS: 2nd consecutive check transitions RECOVERING -> ACTIVE
-  ✓ PASS: Failure during recovery aborts back to DISCONNECTED
-====================================================
-Results: 20 PASSED, 0 FAILED
-====================================================
-```
-
----
-
-## 8. Safe Test Simulation Guide (For Examiners)
-
-The application includes an **Assessment Safe FSM Test Simulator** accessible under **Settings & Simulator** or by clicking the **"Simulate FSM"** button in the top navigation bar.
-
-1. Navigate to **Settings & Simulator**.
-2. Click **"Outage (DISCONNECTED)"**:
-   - The simulator endpoint switches to return HTTP 503.
-   - Watch the **Live Monitoring** or **Overview** tab: within two health-check intervals, the server transitions to **DISCONNECTED** and a red **CRITICAL Alert** is emitted.
-3. Click **"Restore (RECOVERING)"**:
-   - The simulator switches to HTTP 200 OK.
-   - On the first check, the server transitions to **RECOVERING** (blue badge).
-   - On the second check, verification completes and the server transitions to **ACTIVE** (green badge) and a green **SUCCESS Alert** is generated!
-4. Click **"Latency Spike (SLOW)"**:
-   - The simulator injects a 900ms delay.
-   - The server transitions to **SLOW** (yellow badge) and a warning alert is emitted.
-
----
-
-## 9. REST API Endpoint Reference
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/health` | System health, uptime, and database engine status |
-| `GET` | `/api/servers` | List all configured servers with filtering |
-| `POST` | `/api/servers` | Register a new server (validates URL & SSRF) |
-| `GET` | `/api/servers/:id` | Retrieve single server configuration |
-| `PUT` | `/api/servers/:id` | Update server thresholds and status |
-| `DELETE` | `/api/servers/:id` | Delete server and remove from scheduler |
-| `GET` | `/api/servers/:id/history` | Historical monitoring time-series records |
-| `GET` | `/api/servers/:id/alerts` | Get alerts for a specific server |
-| `POST` | `/api/monitoring/:id/check` | Trigger an immediate on-demand health-check |
-| `GET` | `/api/alerts` | List failure alerts with severity and read filters |
-| `PATCH` | `/api/alerts/:id/read` | Mark an individual alert as read |
-| `PATCH` | `/api/alerts/read-all` | Mark all alerts as read |
-| `DELETE` | `/api/alerts/:id` | Delete an alert record |
-| `GET` | `/api/analytics` | High-level fleet analytics and distribution |
-| `GET` | `/api/fsm/transitions` | Audit log of state transitions |
-| `GET` | `/api/fsm/rules` | FSM rules and state definitions |
-| `POST` | `/api/mock/simulator/set` | Dynamically adjust mock test server state |
-
----
-
-## 10. Deployment Instructions
-
-### A. Deploy Frontend to Vercel
-1. Push your repository to GitHub.
-2. Sign in to [Vercel](https://vercel.com/) and click **Add New Project**.
-3. Import your GitHub repository.
-4. Set **Root Directory** to `client`.
-5. Set Build Command to `npm run build` and Output Directory to `dist`.
-6. Add Environment Variables:
-   - `VITE_API_URL`: Your deployed Render backend URL (e.g. `https://your-api.onrender.com/api`)
-   - `VITE_SOCKET_URL`: Your deployed Render backend URL (e.g. `https://your-api.onrender.com`)
-7. Click **Deploy**.
-
-### B. Deploy Backend to Render
-1. Create a free account at [Render](https://render.com/).
-2. Create a new **Web Service** and connect your GitHub repository.
-3. Set **Root Directory** to `server`.
-4. Environment: `Node`.
-5. Build Command: `npm install`.
-6. Start Command: `npm start`.
-7. Add Environment Variables:
-   - `PORT`: `10000` (Render default)
-   - `MONGODB_URI`: Your MongoDB Atlas connection string (or leave blank to use the built-in fallback)
-   - `CLIENT_URL`: Your deployed Vercel frontend URL
-   - `NODE_ENV`: `production`
-8. Click **Create Web Service**.
-
----
-
-## 11. Git & GitHub Submission Instructions
-
-To commit and push this assessment project to GitHub:
-
-```powershell
-cd "C:\Users\moham\.gemini\antigravity\scratch\distributed-server-monitor"
-
-# Stage all files
-git add client/ server/ package.json README.md .gitignore
-
-# Commit changes
-git commit -m "feat: complete distributed server monitoring system with FSM and React dashboard"
-
-# Link to your GitHub repository
-git remote add origin https://github.com/YOUR_USERNAME/distributed-server-monitor.git
-git branch -M main
-git push -u origin main
-```
-
----
-
-## 12. Assessment Submission Checklist
-
-- [x] **React.js Frontend** (Vite, Recharts, Lucide React, responsive Dark Navy design)
-- [x] **Node.js Express Backend** (Axios health-checks, rate limiting, centralized error handling)
-- [x] **MongoDB & Mongoose Models** (`Server`, `MonitoringHistory`, `Alert`, `StateTransition`)
-- [x] **Finite-State Machine (FSM)** (`ACTIVE`, `SLOW`, `DISCONNECTED`, `RECOVERING`)
-- [x] **Real-Time WebSockets** (Socket.IO bi-directional ping and status broadcast)
-- [x] **8 Complete Functional Pages**:
-  1. Overview Dashboard
-  2. Server Management
-  3. Live Monitoring
-  4. Failure Alerts
-  5. Historical Reports (with CSV Export)
-  6. Performance Analytics
-  7. FSM Visualization
-  8. Settings & Safe Test Simulator
-- [x] **Security & SSRF Guard** (Private IP blocking, protocol whitelist, redirect protection)
-- [x] **Safe Test Simulator** (Preset buttons to simulate all conditions safely)
-- [x] **Unit & FSM Test Suite** (20 passing automated tests)
-- [x] **Deployment & Setup Instructions** (Render & Vercel)
+## 8. License & Assessment Attribution
+Developed as an advanced-level Distributed Server Health Monitoring and Failure Detection System following enterprise full-stack design patterns.

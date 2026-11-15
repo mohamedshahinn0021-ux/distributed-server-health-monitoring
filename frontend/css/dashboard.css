@@ -1,0 +1,253 @@
+/* ==========================================================================
+   DASHBOARD SPECIFIC STYLES & WIDGET ARCHITECTURE
+   ========================================================================== */
+
+/* Metric Cards Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.metric-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.metric-card.total::after { background: var(--accent-primary); }
+.metric-card.active::after { background: var(--status-active); }
+.metric-card.slow::after { background: var(--status-slow); }
+.metric-card.disconnected::after { background: var(--status-disconnected); }
+.metric-card.recovering::after { background: var(--status-recovering); }
+.metric-card.availability::after { background: #8b5cf6; }
+.metric-card.latency::after { background: #06b6d4; }
+
+.metric-info h6 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.metric-info h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.metric-info small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.metric-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.45rem;
+}
+
+.metric-card.total .metric-icon-badge {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-primary);
+}
+
+.metric-card.active .metric-icon-badge {
+  background: var(--status-active-bg);
+  color: var(--status-active);
+}
+
+.metric-card.slow .metric-icon-badge {
+  background: var(--status-slow-bg);
+  color: var(--status-slow);
+}
+
+.metric-card.disconnected .metric-icon-badge {
+  background: var(--status-disconnected-bg);
+  color: var(--status-disconnected);
+}
+
+.metric-card.recovering .metric-icon-badge {
+  background: var(--status-recovering-bg);
+  color: var(--status-recovering);
+}
+
+.metric-card.availability .metric-icon-badge {
+  background: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+}
+
+.metric-card.latency .metric-icon-badge {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+}
+
+/* Charts Section */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 290px;
+}
+
+/* FSM Visualizer Diagram Banner */
+.fsm-banner {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.fsm-node {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+}
+
+.fsm-node.active {
+  background-color: var(--status-active-bg);
+  color: var(--status-active);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.fsm-node.slow {
+  background-color: var(--status-slow-bg);
+  color: var(--status-slow);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.fsm-node.disconnected {
+  background-color: var(--status-disconnected-bg);
+  color: var(--status-disconnected);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.fsm-node.recovering {
+  background-color: var(--status-recovering-bg);
+  color: var(--status-recovering);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.fsm-arrow {
+  color: var(--text-muted);
+  font-size: 1.15rem;
+}
+
+/* Live Activity Ticker */
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  font-size: 0.85rem;
+  transition: background-color var(--transition-fast);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item:hover {
+  background-color: var(--bg-card-subtle);
+}
+
+.activity-badge {
+  font-size: 0.75rem;
+  font-family: monospace;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+}
+
+/* Alert List Widget */
+.alert-feed-item {
+  padding: 0.9rem 1.15rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  font-size: 0.85rem;
+}
+
+.alert-feed-item:last-child {
+  border-bottom: none;
+}
+
+.alert-feed-item.critical {
+  border-left: 3px solid var(--status-disconnected);
+}
+
+.alert-feed-item.warning {
+  border-left: 3px solid var(--status-slow);
+}
+
+.alert-feed-item.info {
+  border-left: 3px solid var(--status-recovering);
+}
+
+.alert-feed-item.success {
+  border-left: 3px solid var(--status-active);
+}

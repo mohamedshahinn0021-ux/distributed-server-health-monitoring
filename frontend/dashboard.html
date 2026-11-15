@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Distributed Server Health Monitoring</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="brand-text">
+          <h5>ServerPulse</h5>
+          <small>Distributed FSM Monitor</small>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Navigation</div>
+        <a href="dashboard.html" class="sidebar-link active">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="servers.html" class="sidebar-link">
+          <i class="bi bi-hdd-network"></i>
+          <span>Server Management</span>
+        </a>
+        <a href="monitoring.html" class="sidebar-link">
+          <i class="bi bi-broadcast"></i>
+          <span>Live Console</span>
+        </a>
+
+        <div class="nav-section-title">Diagnostics</div>
+        <a href="alerts.html" class="sidebar-link">
+          <i class="bi bi-bell"></i>
+          <span>Failure Alerts</span>
+        </a>
+        <a href="history.html" class="sidebar-link">
+          <i class="bi bi-clock-history"></i>
+          <span>Historical Analytics</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-snippet">
+          <div class="user-avatar">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <div>
+            <div class="user-display-email small fw-bold text-white text-truncate" style="max-width: 130px;">admin</div>
+            <div class="text-muted" style="font-size: 0.68rem;">System Admin</div>
+          </div>
+        </div>
+        <a href="#" class="action-logout text-danger fs-5" title="Sign Out">
+          <i class="bi bi-box-arrow-right"></i>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="app-main">
+      <!-- Top App Header -->
+      <header class="app-header">
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn btn-outline-secondary d-lg-none" id="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('show')">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <div class="header-title">
+            <h4>Health & Failure Monitoring Dashboard</h4>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="live-pill">
+            <span class="pulse-dot"></span>
+            <span>LIVE SOCKET STREAM</span>
+          </div>
+
+          <button class="btn-theme-toggle" id="theme-toggle-btn" title="Toggle Theme">
+            <i class="bi bi-moon-stars-fill"></i>
+          </button>
+
+          <button class="btn btn-sm btn-outline-primary" id="btn-refresh-dashboard" title="Refresh Dashboard">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- Dashboard Content Container -->
+      <div class="p-4">
+        <!-- Finite State Machine Visual Workflow Banner -->
+        <div class="fsm-banner">
+          <div class="fw-bold small text-secondary">
+            <i class="bi bi-diagram-3 me-1 text-primary"></i> AUTOMATED FINITE STATE MACHINE (FSM):
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="fsm-node active">
+              <span class="pulse-dot" style="background:#10b981;"></span> ACTIVE (Healthy)
+            </span>
+            <i class="bi bi-arrow-left-right fsm-arrow"></i>
+            <span class="fsm-node slow">
+              <span class="pulse-dot" style="background:#f59e0b;"></span> SLOW (&gt; Threshold)
+            </span>
+            <i class="bi bi-arrow-right fsm-arrow"></i>
+            <span class="fsm-node disconnected">
+              <span class="pulse-dot" style="background:#ef4444;"></span> DISCONNECTED (&ge;3 Fails)
+            </span>
+            <i class="bi bi-arrow-right fsm-arrow"></i>
+            <span class="fsm-node recovering">
+              <span class="pulse-dot" style="background:#3b82f6;"></span> RECOVERING (Stabilizing)
+            </span>
+            <i class="bi bi-arrow-right fsm-arrow"></i>
+            <span class="badge bg-success-subtle text-success border">ACTIVE</span>
+          </div>
+        </div>
+
+        <!-- 7 Core Metrics Cards Grid -->
+        <div class="metrics-grid">
+          <!-- Total Servers -->
+          <div class="metric-card total">
+            <div class="metric-info">
+              <h6>Total Registered</h6>
+              <h3 id="stat-total-servers">0</h3>
+              <small>Configured nodes</small>
+            </div>
+            <div class="metric-icon-badge">
+              <i class="bi bi-hdd-stack"></i>
+            </div>
+          </div>
+
+          <!-- Active Servers (Green) -->
+          <div class="metric-card active">
+            <div class="metric-info">
+              <h6>Active Servers</h6>
+              <h3 id="stat-active-servers" class="text-success">0</h3>
+              <small class="text-success">&bull; Healthy response</small>
+            </div>
+            <div class="metric-icon-badge">
+              <i class="bi bi-check-circle"></i>
+            </div>
+          </div>
+
+          <!-- Slow Servers (Yellow) -->
+          <div class="metric-card slow">
+            <div class="metric-info">
+              <h6>Slow Servers</h6>
+              <h3 id="stat-slow-servers" class="text-warning">0</h3>
+              <small class="text-warning">&bull; High latency</small>
+            </div>
+            <div class="metric-icon-badge">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+          </div>
+
+          <!-- Disconnected Servers (Red) -->
+          <div class="metric-card disconnected">
+            <div class="metric-info">
+              <h6>Disconnected</h6>
+              <h3 id="stat-disconnected-servers" class="text-danger">0</h3>
+              <small class="text-danger">&bull; Downtime detected</small>
+            </div>
+            <div class="metric-icon-badge">
+              <i class="bi bi-slash-circle"></i>
+            </div>
+          </div>
+
+          <!-- Recovering Servers (Blue) -->
+          <div class="metric-card recovering">
+            <div class="metric-info">
+              <h6>Recovering</h6>
+              <h3 id="stat-recovering-servers" class="text-primary">0</h3>
+              <small class="text-primary">&bull; Validation phase</small>
+            </div>
+            <div class="metric-icon-badge">
+              <i class="bi bi-arrow-repeat"></i>
+            </div>
+          </div>
+
+          <!-- Overall Availability -->
+          <div class="metric-card availability">
+            <div class="metric-info">
+              <h6>Overall Availability</h6>
+              <h3 id="stat-availability">100%</h3>
+              <small>Uptime ratio</small>
+            </div>
+            <div class="metric-icon-badge">
+              <i class="bi bi-shield-shaded"></i>
+            </div>
+          </div>
+
+          <!-- Avg Response Time -->
+          <div class="metric-card latency">
+            <div class="metric-info">
+              <h6>Avg Response Time</h6>
+              <h3 id="stat-avg-latency">0 ms</h3>
+              <small>Probe latency</small>
+            </div>
+            <div class="metric-icon-badge">
+              <i class="bi bi-lightning-charge"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section Grid -->
+        <div class="charts-grid">
+          <!-- Latency Chart -->
+          <div class="card card-custom">
+            <div class="card-header">
+              <div class="fw-bold">
+                <i class="bi bi-bar-chart-line text-primary me-2"></i> Real-Time Server Response Times (ms)
+              </div>
+              <small class="text-muted">Probed vs Configured Thresholds</small>
+            </div>
+            <div class="card-body">
+              <div class="chart-wrapper">
+                <canvas id="chart-latency"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Health Distribution Doughnut Chart -->
+          <div class="card card-custom">
+            <div class="card-header">
+              <div class="fw-bold">
+                <i class="bi bi-pie-chart text-success me-2"></i> Health State Distribution
+              </div>
+              <small class="text-muted">FSM Classification</small>
+            </div>
+            <div class="card-body">
+              <div class="chart-wrapper">
+                <canvas id="chart-distribution"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Server Status Table -->
+        <div class="card card-custom mb-4">
+          <div class="card-header">
+            <div class="fw-bold">
+              <i class="bi bi-server text-primary me-2"></i> Real-Time Server Health Status
+            </div>
+            <a href="servers.html" class="btn btn-sm btn-primary">
+              <i class="bi bi-plus-circle me-1"></i> Manage Servers
+            </a>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-custom table-hover">
+                <thead>
+                  <tr>
+                    <th>Server Name & URL</th>
+                    <th>Current State</th>
+                    <th>Response Time</th>
+                    <th>Status Code</th>
+                    <th>Interval</th>
+                    <th>Last Checked</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="server-status-tbody">
+                  <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                      <div class="spinner-border spinner-border-sm me-2"></div>
+                      Connecting to distributed monitoring engine...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Alerts & Activity Feed Grid -->
+        <div class="row g-4">
+          <!-- Failure Alerts -->
+          <div class="col-lg-6">
+            <div class="card card-custom h-100">
+              <div class="card-header">
+                <div class="fw-bold">
+                  <i class="bi bi-exclamation-triangle text-danger me-2"></i> Recent Failure Alerts
+                </div>
+                <a href="alerts.html" class="btn btn-sm btn-outline-secondary">View All</a>
+              </div>
+              <div class="card-body p-0">
+                <div id="recent-alerts-list" style="max-height: 360px; overflow-y: auto;">
+                  <div class="text-center py-4 text-muted small">Loading alerts...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monitoring Activity Feed -->
+          <div class="col-lg-6">
+            <div class="card card-custom h-100">
+              <div class="card-header">
+                <div class="fw-bold">
+                  <i class="bi bi-activity text-info me-2"></i> Real-Time Monitoring Activity
+                </div>
+                <a href="monitoring.html" class="btn btn-sm btn-outline-secondary">Live Console</a>
+              </div>
+              <div class="card-body p-0">
+                <ul class="activity-list" id="recent-activity-list">
+                  <li class="activity-item text-center text-muted">Awaiting probe pulses...</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
